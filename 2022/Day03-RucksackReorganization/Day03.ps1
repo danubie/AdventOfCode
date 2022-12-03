@@ -53,3 +53,31 @@ function Day03 {
     }
     $sum2
 }
+function Day03Part2 {
+    [CmdletBinding()]
+    param (
+        [string] $InputFile
+    )
+
+    $data = Get-Content -Path $InputFile
+    # first we have to group 3 lines
+    $grouped = [System.Collections.ArrayList]::new()
+    for ($i = 0; $i -lt $data.Count; $i += 3) {
+        $groupeOf3 = ($data[$i], $data[$i+1], $data[$i+2])
+        $null = $grouped.Add($groupeOf3)
+    }
+
+    $sum = 0
+    $sum2 = 0
+    foreach ($g in $grouped) {
+        # find each unique item from all 4 rucksacks in the other 3 rucksacks
+        $ItemsToFind = ($g -join '') -split '' | Select-Object -Unique | Where-Object { $_ -ne '' }
+        $value2 = Get-ItemValue -ItemsToFind $ItemsToFind -ItemLists $g
+        if ($value2 -ne 0) {
+            Write-Verbose "Found2 $ItemsToFind with value $value2 in $comp2 => sum = $sum2"
+        }
+
+        $sum2 += $value2
+    }
+    $sum2
+}
