@@ -47,7 +47,7 @@ Describe 'Day01 - Part 2' {
 10000
 '@ -split "`r`n"
     }
-        $result = Get-ElfTop3 -InputFile .\InputData.txt
+        $result = Get-ElfTop3 -InputFile $PSScriptRoot\InputData.txt
         $result.Sum | Should -Be 45000
     }
     It 'Should run with real data' {
