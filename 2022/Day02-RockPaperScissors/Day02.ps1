@@ -1,7 +1,8 @@
 function Get-RpsScore {
     param(
         [Parameter(Mandatory)]
-        [string]$InputFile
+        [string] $InputFile,
+        [switch] $Round2
     )
 
     function XlatTool ($c) {
@@ -17,9 +18,25 @@ function Get-RpsScore {
     $totalScore = 0
     foreach ($line in $input) {
         $score = 0
-        $line = $line -split " "
-        $player1 = XlatTool $line[0]
-        $playMe = XlatTool $line[1]
+        $split = $line -split " "
+        if ($Round2) {
+            $player1 = XlatTool $split[0]
+            switch ("$player1 $($split[1])") {
+                'R X' { $playMe = 'S' }
+                'R Y' { $playMe = 'R' }
+                'R Z' { $playMe = 'P' }
+                'P X' { $playMe = 'R' }
+                'P Y' { $playMe = 'P' }
+                'P Z' { $playMe = 'S' }
+                'S X' { $playMe = 'P' }
+                'S Y' { $playMe = 'S' }
+                'S Z' { $playMe = 'R' }
+                Default { throw "Unknown combination [$player1 $($split[1])]" }
+            }
+        } else {
+            $player1 = XlatTool $split[0]
+            $playMe = XlatTool $split[1]
+        }
         switch ($playMe) {
             "R" { $score += 1 }
             "P" { $score += 2 }
