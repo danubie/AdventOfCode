@@ -14,9 +14,9 @@ function Get-RpsScore {
         }
     }
 
-    $input = Get-Content -Path $InputFile
+    $data = Get-Content -Path $InputFile
     $totalScore = 0
-    foreach ($line in $input) {
+    foreach ($line in $data) {
         $score = 0
         $split = $line -split " "
         if ($Round2) {
