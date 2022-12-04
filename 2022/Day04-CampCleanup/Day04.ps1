@@ -10,6 +10,7 @@ function Day04 {
         $pairInLine = $line -split ','
         $pair = [PSCustomObject]@{
             FullyContains = $false
+            HasOverlap = $false
             Section1 = $null
             Section2 = $null
         }
@@ -19,8 +20,8 @@ function Day04 {
         $pair.Section2 = [pscustomobject]@{ lbound = [int]$borders[0]; ubound = [int]$borders[1] }
         $pair.FullyContains = ($pair.Section1.lbound -le $pair.Section2.lbound) -and ($pair.Section1.ubound -ge $pair.Section2.ubound)
         $pair.FullyContains = $pair.FullyContains -or (($pair.Section2.lbound -le $pair.Section1.lbound) -and ($pair.Section2.ubound -ge $pair.Section1.ubound))
+        $pair.HasOverlap = ($pair.Section1.lbound -le $pair.Section2.lbound) -and ($pair.Section1.ubound -ge $pair.Section2.lbound)
+        $pair.HasOverlap = $pair.HasOverlap -or (($pair.Section2.lbound -le $pair.Section1.lbound) -and ($pair.Section2.ubound -ge $pair.Section1.lbound))
         $pair
-
-        # True @{lbound=53; ubound=92} @{lbound=6; ubound=52}
     }
 }

@@ -18,11 +18,19 @@ Describe 'Testing' {
         $result = Day04 -Input $PSScriptRoot/InputData.txt
         $result | Where FullyContains -eq $true | Should -HaveCount 2
     }
+    It 'Part 2 should return 4' {
+        $result = Day04 -Input $PSScriptRoot/InputData.txt
+        $result | Where HasOverlap -eq $true | Should -HaveCount 4
+    }
 }
 Describe 'Real Data' {
     It 'Part 1 should return 475' {
         $result = Day04 -Input $PSScriptRoot/InputData.txt
         $result | Where FullyContains -eq $true | Should -HaveCount 475
+    }
+    It 'Part 2 should return 825' {
+        $result = Day04 -Input $PSScriptRoot/InputData.txt
+        $result | Where HasOverlap -eq $true | Should -HaveCount 825
     }
 
 }
