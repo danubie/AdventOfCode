@@ -20,8 +20,9 @@ Describe 'Part1' {
                 Matrix    = $matrix
                 Length    = 5
             }
-            $ret = Day08 @Splat -Verbose
-            $ret | Should -Be 21
+            $ret = Day08 @Splat
+            $ret.nbTrees | Should -Be 21
+            $ret.MaxVisibility | Should -Be 8
         }
     }
     Context 'using real data' {
@@ -32,8 +33,9 @@ Describe 'Part1' {
                 Matrix    = $matrix
                 Length    = 99
             }
-            $ret = Day08 @Splat -Verbose
-            $ret | Should -Be 1851
+            $ret = Day08 @Splat
+            $ret.NbTrees | Should -Be 1851
+            $ret.maxVisibility | Should -Be 574080
         }
     }
 }

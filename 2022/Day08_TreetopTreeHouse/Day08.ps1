@@ -88,7 +88,90 @@ function Get-NbVisibleTrees {
         $i++
         $j=0
     }
-    $nbTrees
+    $result = @{
+        nbTrees = $nbTrees
+    }
+    $result
+}
+
+# calculate the visibility of a tree
+# returns the product of visbility in each direction
+function CalculateVisibility {
+    [CmdletBinding()]
+    param (
+        $matrix,
+        [int] $row,
+        [int] $col
+    )
+    # trees at the borders have visibility 0, so the product is 0
+    if ($row -eq 0 -or $row -eq ($Length-1) -or $col -eq 0 -or $col -eq ($Length-1)) {
+        return 0
+    }
+    $currentSize = $matrix[$row,$col]
+    $totalVisibility = 1
+    $visibility = 1
+    # check the trees to the left
+    for ($c = $col-1; $c -gt 0; $c--) {
+        if ($matrix[$row,$c] -ge $currentSize) {
+            break
+        }
+        $visibility++
+    }
+    Write-Verbose "tree at $row,$col; value=$($matrix[$row,$col]); visibility $visibility to the left"
+    $totalVisibility *= $visibility
+    $visibility = 1
+    # check the trees to the right
+    for ($c = $col+1; $c -lt ($Length-1); $c++) {
+        if ($matrix[$row,$c] -ge $currentSize) {
+            break
+        }
+        $visibility++
+    }
+    Write-Verbose "tree at $row,$col; value=$($matrix[$row,$col]); visibility $visibility to the right"
+    $totalVisibility *= $visibility
+    $visibility = 1
+    # check the trees above
+    for ($r = $row-1; $r -gt 0; $r--) {
+        if ($matrix[$r,$col] -ge $currentSize) {
+            break
+        }
+        $visibility++
+    }
+    Write-Verbose "tree at $row,$col; value=$($matrix[$row,$col]); visibility $visibility to the above"
+    $totalVisibility *= $visibility
+    $visibility = 1
+    # check the trees below
+    for ($r = $row+1; $r -lt ($Length-1); $r++) {
+        if ($matrix[$r,$col] -ge $currentSize) {
+            break
+        }
+        $visibility++
+    }
+    Write-Verbose "tree at $row,$col; value=$($matrix[$row,$col]); visibility $visibility to the below"
+    $totalVisibility *= $visibility
+    Write-Verbose "tree at $row,$col; total $totalVisibility"
+    $totalVisibility
+}
+# this function returns the visibility of each tree in the matrix
+# visibility is defined as the distance from the current tree to the nearest tree of a size greater or equal to it
+# trees at the boreds have visibility 0 in the direction of the border
+function Get-TreeVisibility {
+    [CmdletBinding()]
+    param (
+        $matrix,
+        [int] $length
+    )
+    $x = CalculateVisibility -Matrix $matrix -row 1 -col 2
+    $maxVisibility = 0
+    for ($row=1; $row -lt ($length-1); $row++) {
+        for ($col=1; $col -lt ($length-1); $col++) {
+            $vis = CalculateVisibility -Matrix $matrix -row $row -col $col
+            if ($vis -gt $maxVisibility) {
+                $maxVisibility = $vis
+            }
+        }
+    }
+    $maxVisibility
 }
 
 function Day08 {
@@ -97,9 +180,11 @@ function Day08 {
         $matrix,
         [int] $length,
         [string] $InputFile = "$PSScriptRoot/inputdata.txt"
-    )
+        )
 
     BuildForrest -Matrix $matrix -Length $length
     $result = Get-NbVisibleTrees -Matrix $matrix -Length $length
+    $visibilityResult = Get-TreeVisibility -Matrix $matrix -Length $length
+    $result | Add-Member -MemberType NoteProperty -Name MaxVisibility -Value $visibilityResult
     $result
 }
