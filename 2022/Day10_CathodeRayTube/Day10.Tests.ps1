@@ -157,8 +157,17 @@ Describe 'using testdata' {
         }
     }
     It 'Part 1 should return 13140' {
-        $result = Day10 -InputFile "$PSScriptRoot/inputdata.txt" -Verbose
-        $result | Should -Be 13140
+        $result = Day10 -InputFile "$PSScriptRoot/inputdata.txt"
+        $result.Part1 | Should -Be 13140
+    }
+    It 'Part 2 should show correct pixels' {
+        $result = Day10 -InputFile "$PSScriptRoot/inputdata.txt"
+        $result.Part2[0] | Should -Be '##..##..##..##..##..##..##..##..##..##..'
+        $result.Part2[1] | Should -Be '###...###...###...###...###...###...###.'
+        $result.Part2[2] | Should -Be '####....####....####....####....####....'
+        $result.Part2[3] | Should -Be '#####.....#####.....#####.....#####.....'
+        $result.Part2[4] | Should -Be '######......######......######......####'
+        $result.Part2[5] | Should -Be '#######.......#######.......#######.....'
     }
 }
 
@@ -166,7 +175,25 @@ Describe 'Using real data' {
     Context 'Part 1' {
         It 'should return correct result' {
             $result = Day10 -InputFile "$PSScriptRoot/inputdata.txt"
-            $result | Should -Be 15680
+            $result.Part1 | Should -Be 15680
+            foreach ($line in $result.Part2) {
+                Write-Host $line
+            }
+        }
+        It 'Part 2 should show correct pixels' {
+            $result = Day10 -InputFile "$PSScriptRoot/inputdata.txt"
+            $result.Part2[0] | Should -Be '####.####.###..####.#..#..##..#..#.###..'
+            $result.Part2[1] | Should -Be '...#.#....#..#.#....#..#.#..#.#..#.#..#.'
+            $result.Part2[2] | Should -Be '..#..###..###..###..####.#....#..#.#..#.'
+            $result.Part2[3] | Should -Be '.#...#....#..#.#....#..#.#.##.#..#.###..'
+            $result.Part2[4] | Should -Be '#....#....#..#.#....#..#.#..#.#..#.#....'
+            $result.Part2[5] | Should -Be '####.#....###..#....#..#..###..##..#....'
         }
     }
 }
+
+
+
+
+
+
