@@ -1,4 +1,5 @@
 $Script:monkeys = [System.Collections.ArrayList]::new()
+$Script:ModuloBorder = [ulong] 1
 
 function Print-Monkey {
     [CmdletBinding()]
@@ -22,7 +23,7 @@ function Add-Monkey {
         Nr             = ([int] ($monkeyData[0] -replace "Monkey (\d+):", '$1'))
         Operation      = 'unknown'
         OperationValue = 0
-        TestValue      = ([int] ($monkeyData[3] -replace "Test: divisible by (\d+)", '$1'))
+        TestValue      = ([ulong] ($monkeyData[3] -replace "Test: divisible by (\d+)", '$1'))
         ToMonkeyTrue   = ([int] ($monkeyData[4] -replace "If true: throw to monkey (\d+)", '$1'))
         ToMonkeyFalse  = ([int] ($monkeyData[5] -replace "If false: throw to monkey (\d+)", '$1'))
         WorryLevels    = [System.Collections.Queue]::new()
@@ -33,9 +34,10 @@ function Add-Monkey {
     $splat.Operation = $Matches.opcode
     $splat.OperationValue = $Matches.value
     # woory levels converted to int[] and then into Queue
-    [int64[]]($monkeyData[1] -replace "(  Starting items: )(.*)", '$2' -split ', ') | ForEach-Object { $splat.WorryLevels.Enqueue($_) }
+    [ulong[]]($monkeyData[1] -replace "(  Starting items: )(.*)", '$2' -split ', ') | ForEach-Object { $splat.WorryLevels.Enqueue($_) }
 
     $index = $Script:monkeys.Add($splat)
+    $Script:ModuloBorder *= $splat.TestValue
     Write-Verbose "Added monkey $index; $($splat)"
 }
 
@@ -72,13 +74,12 @@ function Invoke-MonkeyThrows {
             $currOperationValue = $monkey.OperationValue
         }
         switch ($monkey.Operation) {
-            '+' { $newLevel = $itemlevel + $currOperationValue }
-            '-' { $newLevel = $itemlevel - $currOperationValue }
-            '*' { $newLevel = $itemlevel * $currOperationValue }
+            '+' { $newLevel = [ulong] ($itemlevel + $currOperationValue) }
+            '*' { $newLevel = [ulong] (($itemlevel * $currOperationValue) % $Script:ModuloBorder) }
             Default { Throw "Unknown operation $($monkey.Operation)" }
         }
         if (!$Part2) {
-            $newLevel = [System.Math]::Floor($newLevel / 3)
+            $newLevel = [ulong] ([System.Math]::Floor($newLevel / 3))
         }
         if ($newlevel % $monkey.TestValue -eq 0) {
             $throwingTo = $monkey.ToMonkeyTrue
@@ -98,6 +99,7 @@ function Day11 {
         [int] $Rounds,
         [switch] $Part2
     )
+    $Script:ModuloBorder = 1
     Import-Monkeys -InputFile $InputFile
     for ($i=0; $i -lt $Rounds; $i++) {
         Write-Verbose "Round $($i+1)"

@@ -42,11 +42,11 @@ Describe 'Testdata' {
             $splatDay11 = @{
                 InputFile = "$PSScriptRoot\inputdata.txt"
                 Rounds    = 1
-                Verbose   = $false
+                Verbose   = $true
             }
             $result = Day11 @SplatDay11
-            $Script:Monkeys[0].WorryLevels.ToArray() | Should -Be (20, 23, 27, 26)
-            $Script:Monkeys[1].WorryLevels.ToArray() | Should -Be (2080, 25, 167, 207, 401, 1046)
+            $Script:Monkeys[0].WorryLevels.Count | Should -Be 4
+            $Script:Monkeys[1].WorryLevels.Count | Should -Be 6
             $Script:Monkeys[2].WorryLevels.Count | Should -Be 0
             $Script:Monkeys[3].WorryLevels.Count | Should -Be 0
         }
@@ -55,11 +55,11 @@ Describe 'Testdata' {
             $splatDay11 = @{
                 InputFile = "$PSScriptRoot\inputdata.txt"
                 Rounds    = 20
-                Verbose   = $false
+                Verbose   = $true
             }
             $result = Day11 @SplatDay11
-            $Script:Monkeys[0].WorryLevels.ToArray() | Should -Be (10, 12, 14, 26, 34)
-            $Script:Monkeys[1].WorryLevels.ToArray() | Should -Be (245, 93, 53, 199, 115)
+            $Script:Monkeys[0].WorryLevels.Count | Should -Be 5
+            $Script:Monkeys[1].WorryLevels.Count | Should -Be 5
             $Script:Monkeys[2].WorryLevels.Count | Should -Be 0
             $Script:Monkeys[3].WorryLevels.Count | Should -Be 0
 
@@ -93,7 +93,7 @@ Describe 'Testdata' {
                 InputFile = "$PSScriptRoot\inputdata.txt"
                 Rounds    = 20
                 Part2     = $true
-                Verbose   = $true
+                Verbose   = $false
             }
             $result = Day11 @SplatDay11
 
@@ -101,6 +101,8 @@ Describe 'Testdata' {
             $Script:Monkeys[1].NbInspections | Should -Be 97
             $Script:Monkeys[2].NbInspections | Should -Be 8
             $Script:Monkeys[3].NbInspections | Should -Be 103
+
+            $result.Part1 | Should -Be 10197
         }
         It 'should return correct result for 1000 rounds' {
             $Script:Monkeys = [System.Collections.ArrayList]::new()
@@ -117,7 +119,7 @@ Describe 'Testdata' {
             $Script:Monkeys[2].NbInspections | Should -Be 199
             $Script:Monkeys[3].NbInspections | Should -Be 5192
 
-            $Result.Part2 | Should -Be 2713310158
+            $Result.Part1 | Should -Be 2713310158
         }
 
     }
