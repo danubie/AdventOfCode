@@ -22,8 +22,9 @@ Describe 'Testdata' {
         }
     }
     It 'Should do something' {
-        Day12
-        ($Script:validPaths | Measure-Object -Minimum).Minimum | Should -Be 31
+        Day12 -verbose
+        # ($Script:validPaths | Measure-Object -Minimum).Minimum | Should -Be 31
+        $Script:shortestPath | Should -Be 31
     }
 }
 

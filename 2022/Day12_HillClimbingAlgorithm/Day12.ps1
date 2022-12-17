@@ -6,6 +6,7 @@ $Script:path = [System.Collections.Stack]::new()               # current path
 $script:movement = @{}
 $Script:First = $null               # start position
 $Script:validPaths = [System.Collections.ArrayList]::new()     # all paths leading to the end
+$script:shortestPath = [int]::MaxValue
 $script:NbMoves = 0
 $Script:StartCharInMap = [byte][char]'a'-1
 $Script:EndCharInMap = [byte][char]'z'+1
@@ -78,58 +79,86 @@ function ClimbHill {
     $x = [int] $x
     $y = [int] $y
     $charValue = [byte][char]$Matrix["$x;$y"]
+    # if ($Script:validPaths.Count -gt 0) {
+    #     if (($Script:Path.Count) -ge $Script:validPaths[0]) {
+    #         Write-Verbose "Path too long $($Script:Path.Count) vs $($Script:validPaths)"
+    #         return
+    #     }
+    # }
+    # if ($charValue -ceq $Script:EndCharInMap) {
+    #     Write-Verbose "Found the end"
+    #     PrintHill -Matrix $Matrix
+    #     [void] $Script:validPaths.Add(($Script:Path).Count)
+    #     return
+    # }
+    if (($Script:Path.Count) -ge $script:shortestPath) {
+        Write-Verbose "Path too long $($Script:Path.Count) vs $($script:shortestPath)"
+        return
+    }
     if ($charValue -ceq $Script:EndCharInMap) {
         Write-Verbose "Found the end"
         PrintHill -Matrix $Matrix
-        [void] $Script:validPaths.Add(($Script:Path).Count)
-        return
-    }
-    if ($Script:validPaths -lt ($Script:Path.Count)) {
-        Write-Verbose "Path too long $($Script:Path.Count) vs $($Script:validPaths)"
+        $script:shortestPath = ($Script:Path).Count
         return
     }
     $operation = ""
     # darf nicht höher als 1 gehen, aber tiefer ist erlaubt
-    if ([Math]::Abs($Matrix["$($x+1);$y"] - $charValue) -le 1 -and -not ($Script:Path).Contains("$($x+1);$y")) {
-        $operation = "right"
-        Write-Verbose "Try $operation"
-        $wayPoint = "$x;$y"
-        $Script:path.Push($wayPoint)
-        $script:movement.Add($wayPoint, '>')
-        ClimbHill -Matrix $Matrix -Start "$($x+1);$y"
-        $script:movement[$wayPoint] = $null
-        $script:movement.Remove($waypoint)
-        $Script:path.Pop()
+    $nextKey = "$($x+1);$y"
+    $nextValue = $Matrix[$nextkey]
+    if ($null -ne $nextValue -and -not ($Script:Path).Contains($nextkey)) {
+        if (($nextValue - $charValue) -le 1) {
+            $operation = "right"
+            Write-Verbose "Try $operation"
+            $wayPoint = "$x;$y"
+            $Script:path.Push($wayPoint)
+            $script:movement.Add($wayPoint, '>')
+            ClimbHill -Matrix $Matrix -Start $nextkey
+            $script:movement[$wayPoint] = $null
+            $script:movement.Remove($waypoint)
+            $Script:path.Pop()
+        }
     }
-    if ([Math]::Abs($Matrix["$x;$($y+1)"] - $charValue) -le 1 -and -not $Script:Path.Contains("$x;$($y+1)")) {
-        $operation = "up"
-        Write-Verbose "Try $operation"
-        $wayPoint = "$x;$y"
-        $Script:path.Push($wayPoint)
-        $script:movement.Add($wayPoint, '^')
-        ClimbHill -Matrix $Matrix -Start "$x;$($y+1)"
-        $script:movement.Remove($waypoint)
-        $Script:path.Pop()
+    $nextKey = "$x;$($y+1)"
+    $nextValue = $Matrix[$nextkey]
+    if ($null -ne $nextValue -and -not ($Script:Path).Contains($nextkey)) {
+        if (($nextValue - $charValue) -le 1) {
+            $operation = "up"
+            Write-Verbose "Try $operation"
+            $wayPoint = "$x;$y"
+            $Script:path.Push($wayPoint)
+            $script:movement.Add($wayPoint, '^')
+            ClimbHill -Matrix $Matrix -Start $nextkey
+            $script:movement.Remove($waypoint)
+            $Script:path.Pop()
+        }
     }
-    if ([Math]::Abs($Matrix["$($x-1);$y"] - $charValue) -le 1 -and -not $Script:Path.Contains("$($x-1);$y")) {
-        $operation = "left"
-        Write-Verbose "Try $operation"
-        $wayPoint = "$x;$y"
-        $Script:path.Push($wayPoint)
-        $script:movement.Add($wayPoint, '<')
-        ClimbHill -Matrix $Matrix -Start "$($x-1);$y"
-        $script:movement.Remove($waypoint)
-        $Script:path.Pop()
+    $nextKey = "$($x-1);$y"
+    $nextValue = $Matrix[$nextkey]
+    if ($null -ne $nextValue -and -not ($Script:Path).Contains($nextkey)) {
+        if (($nextValue - $charValue) -le 1) {
+            $operation = "left"
+            Write-Verbose "Try $operation"
+            $wayPoint = "$x;$y"
+            $Script:path.Push($wayPoint)
+            $script:movement.Add($wayPoint, '<')
+            ClimbHill -Matrix $Matrix -Start $nextKey
+            $script:movement.Remove($waypoint)
+            $Script:path.Pop()
+        }
     }
-    if ([Math]::Abs($Matrix["$x;$($y-1)"] - $charValue) -le 1 -and -not $Script:Path.Contains("$x;$($y-1)")) {
-        $operation = "down"
-        Write-Verbose "Try $operation"
-        $wayPoint = "$x;$y"
-        $Script:path.Push($wayPoint)
-        $script:movement.Add($wayPoint, 'v')
-        ClimbHill -Matrix $Matrix -Start "$x;$($y-1)"
-        $Script:path.Pop()
-        $script:movement.Remove($waypoint)
+    $nextKey = "$x;$($y-1)"
+    $nextValue = $Matrix[$nextkey]
+    if ($null -ne $nextValue -and -not ($Script:Path).Contains($nextkey)) {
+        if (($nextValue - $charValue) -le 1) {
+            $operation = "down"
+            Write-Verbose "Try $operation"
+            $wayPoint = "$x;$y"
+            $Script:path.Push($wayPoint)
+            $script:movement.Add($wayPoint, 'v')
+            ClimbHill -Matrix $Matrix -Start $nextKey
+            $Script:path.Pop()
+            $script:movement.Remove($waypoint)
+        }
     }
     if ($operation -eq "") {
         # PrintHill -Matrix $Matrix
@@ -137,8 +166,23 @@ function ClimbHill {
     }
 
 }
+function Day12 {
+    [CmdletBinding()]
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [string] $InputFile = "$PSScriptRoot/inputdata.txt"
+    )
 
-# function ClimbHill2 {
+    $matrix= BuildHill -InputData (Get-Content $InputFile)
+    PrintHill -Matrix $matrix
+    ClimbHill -Matrix $matrix -Start $Script:First # -Verbose
+    # $Script:validPaths
+    $Script:shortestPath
+    Write-Verbose "NbMoves: $Script:NbMoves" -Verbose
+}
+
+# function ClimbHill {
 #     [CmdletBinding()]
 #     param (
 #         [hashtable] $Matrix,
@@ -159,7 +203,8 @@ function ClimbHill {
 #     $x, $y = $Start.Split(';')
 #     $x = [int] $x
 #     $y = [int] $y
-#     if ($Matrix["$x;$y"] -ceq $Script:EndCharInMap) {
+#     $charValue = [byte][char]$Matrix["$x;$y"]
+#     if ($charValue -ceq $Script:EndCharInMap) {
 #         Write-Verbose "Found the end"
 #         PrintHill -Matrix $Matrix
 #         [void] $Script:validPaths.Add(($Script:Path).Count)
@@ -170,8 +215,8 @@ function ClimbHill {
 #         return
 #     }
 #     $operation = ""
-#     # TODO es ist nicht ABS sondern es darf nur nichthöher als 1 sein
-#     if ([Math]::Abs($Matrix["$($x+1);$y"] - $Matrix["$x;$y"]) -le 1 -and -not ($Script:Path).Contains("$($x+1);$y")) {
+#     # darf nicht höher als 1 gehen, aber tiefer ist erlaubt
+#     if ([Math]::Abs($Matrix["$($x+1);$y"] - $charValue) -le 1 -and -not ($Script:Path).Contains("$($x+1);$y")) {
 #         $operation = "right"
 #         Write-Verbose "Try $operation"
 #         $wayPoint = "$x;$y"
@@ -182,7 +227,7 @@ function ClimbHill {
 #         $script:movement.Remove($waypoint)
 #         $Script:path.Pop()
 #     }
-#     if ([Math]::Abs($Matrix["$x;$($y+1)"] - $Matrix["$x;$y"]) -le 1 -and -not $Script:Path.Contains("$x;$($y+1)")) {
+#     if ([Math]::Abs($Matrix["$x;$($y+1)"] - $charValue) -le 1 -and -not $Script:Path.Contains("$x;$($y+1)")) {
 #         $operation = "up"
 #         Write-Verbose "Try $operation"
 #         $wayPoint = "$x;$y"
@@ -192,7 +237,7 @@ function ClimbHill {
 #         $script:movement.Remove($waypoint)
 #         $Script:path.Pop()
 #     }
-#     if ([Math]::Abs($Matrix["$($x-1);$y"] - $Matrix["$x;$y"]) -le 1 -and -not $Script:Path.Contains("$($x-1);$y")) {
+#     if ([Math]::Abs($Matrix["$($x-1);$y"] - $charValue) -le 1 -and -not $Script:Path.Contains("$($x-1);$y")) {
 #         $operation = "left"
 #         Write-Verbose "Try $operation"
 #         $wayPoint = "$x;$y"
@@ -202,7 +247,7 @@ function ClimbHill {
 #         $script:movement.Remove($waypoint)
 #         $Script:path.Pop()
 #     }
-#     if ([Math]::Abs($Matrix["$x;$($y-1)"] - $Matrix["$x;$y"]) -le 1 -and -not $Script:Path.Contains("$x;$($y-1)")) {
+#     if ([Math]::Abs($Matrix["$x;$($y-1)"] - $charValue) -le 1 -and -not $Script:Path.Contains("$x;$($y-1)")) {
 #         $operation = "down"
 #         Write-Verbose "Try $operation"
 #         $wayPoint = "$x;$y"
@@ -218,18 +263,3 @@ function ClimbHill {
 #     }
 
 # }
-
-function Day12 {
-    [CmdletBinding()]
-    [CmdletBinding()]
-    param (
-        [Parameter()]
-        [string] $InputFile = "$PSScriptRoot/inputdata.txt"
-    )
-
-    $matrix= BuildHill -InputData (Get-Content $InputFile)
-    PrintHill -Matrix $matrix
-    ClimbHill -Matrix $matrix -Start $Script:First # -Verbose
-    $Script:validPaths
-    Write-Verbose "NbMoves: $Script:NbMoves" -Verbose
-}
