@@ -8,8 +8,8 @@ $Script:First = $null               # start position
 $Script:validPaths = [System.Collections.ArrayList]::new()     # all paths leading to the end
 $script:shortestPath = [int]::MaxValue
 $script:NbMoves = 0
-$Script:StartCharInMap = [byte][char]'a'-1
-$Script:EndCharInMap = [byte][char]'z'+1
+$Script:StartCharInMap = [byte][char]'z'+1
+$Script:EndCharInMap = [byte][char]'a'-1
 
 function BuildHill {
     [CmdletBinding()]
@@ -24,11 +24,11 @@ function BuildHill {
         for ($x = 0; $x -lt $line.Length; $x++) {
             $coord = "$x;$lineNr"
             $Matrix.Add($coord, [byte][char]($line[$x]))
-            if ($line[$x] -ceq 'S') {
+            if ($line[$x] -ceq 'E') {
                 $Script:First = $coord
                 $matrix[$coord] = $Script:StartCharInMap       # to make it possible to do char subraction at the start
             }
-            if ($line[$x] -ceq 'E') {
+            if ($line[$x] -ceq 'S') {
                 $matrix[$coord] = $Script:EndCharInMap       # to make it possible to do char subraction at the start
             }
         }
@@ -106,7 +106,7 @@ function ClimbHill {
     $nextKey = "$($x+1);$y"
     $nextValue = $Matrix[$nextkey]
     if ($null -ne $nextValue -and -not ($Script:Path).Contains($nextkey)) {
-        if (($nextValue - $charValue) -le 1) {
+        if (($nextValue - $charValue) -ge -1) {
             $operation = "right"
             Write-Verbose "Try $operation"
             $wayPoint = "$x;$y"
@@ -121,7 +121,7 @@ function ClimbHill {
     $nextKey = "$x;$($y+1)"
     $nextValue = $Matrix[$nextkey]
     if ($null -ne $nextValue -and -not ($Script:Path).Contains($nextkey)) {
-        if (($nextValue - $charValue) -le 1) {
+        if (($nextValue - $charValue) -ge -1) {
             $operation = "up"
             Write-Verbose "Try $operation"
             $wayPoint = "$x;$y"
@@ -135,7 +135,7 @@ function ClimbHill {
     $nextKey = "$($x-1);$y"
     $nextValue = $Matrix[$nextkey]
     if ($null -ne $nextValue -and -not ($Script:Path).Contains($nextkey)) {
-        if (($nextValue - $charValue) -le 1) {
+        if (($nextValue - $charValue) -ge -1) {
             $operation = "left"
             Write-Verbose "Try $operation"
             $wayPoint = "$x;$y"
@@ -149,7 +149,7 @@ function ClimbHill {
     $nextKey = "$x;$($y-1)"
     $nextValue = $Matrix[$nextkey]
     if ($null -ne $nextValue -and -not ($Script:Path).Contains($nextkey)) {
-        if (($nextValue - $charValue) -le 1) {
+        if (($nextValue - $charValue) -ge -1) {
             $operation = "down"
             Write-Verbose "Try $operation"
             $wayPoint = "$x;$y"
@@ -181,85 +181,3 @@ function Day12 {
     $Script:shortestPath
     Write-Verbose "NbMoves: $Script:NbMoves" -Verbose
 }
-
-# function ClimbHill {
-#     [CmdletBinding()]
-#     param (
-#         [hashtable] $Matrix,
-#         $Start
-#     )
-#     # try 1
-#     # look at the current point, if it is 'E' return 1
-#     # from a current point go +1 in x and look if the letter is max. 1 ahead of the current point
-#     # if so, go there and repeat with try 1
-#     # if not, go -1 in y and look if the letter is max. 1 ahead of the current point
-#     # if so, go there and repeat with try 1
-#     # if not, go +1 in y and look if the letter is max. 1 ahead of the current point
-#     # if so, go there and repeat with try 1
-#     # if not, go -1 in x and look if the letter is max. 1 ahead of the current point
-#     # if so, go there and repeat with try 1
-#     # if it is not, return 1
-#     $script:NbMoves++
-#     $x, $y = $Start.Split(';')
-#     $x = [int] $x
-#     $y = [int] $y
-#     $charValue = [byte][char]$Matrix["$x;$y"]
-#     if ($charValue -ceq $Script:EndCharInMap) {
-#         Write-Verbose "Found the end"
-#         PrintHill -Matrix $Matrix
-#         [void] $Script:validPaths.Add(($Script:Path).Count)
-#         return
-#     }
-#     if ($Script:validPaths -lt ($Script:Path.Count)) {
-#         Write-Verbose "Path too long $($Script:Path.Count) vs $($Script:validPaths)"
-#         return
-#     }
-#     $operation = ""
-#     # darf nicht höher als 1 gehen, aber tiefer ist erlaubt
-#     if ([Math]::Abs($Matrix["$($x+1);$y"] - $charValue) -le 1 -and -not ($Script:Path).Contains("$($x+1);$y")) {
-#         $operation = "right"
-#         Write-Verbose "Try $operation"
-#         $wayPoint = "$x;$y"
-#         $Script:path.Push($wayPoint)
-#         $script:movement.Add($wayPoint, '>')
-#         ClimbHill -Matrix $Matrix -Start "$($x+1);$y"
-#         $script:movement[$wayPoint] = $null
-#         $script:movement.Remove($waypoint)
-#         $Script:path.Pop()
-#     }
-#     if ([Math]::Abs($Matrix["$x;$($y+1)"] - $charValue) -le 1 -and -not $Script:Path.Contains("$x;$($y+1)")) {
-#         $operation = "up"
-#         Write-Verbose "Try $operation"
-#         $wayPoint = "$x;$y"
-#         $Script:path.Push($wayPoint)
-#         $script:movement.Add($wayPoint, '^')
-#         ClimbHill -Matrix $Matrix -Start "$x;$($y+1)"
-#         $script:movement.Remove($waypoint)
-#         $Script:path.Pop()
-#     }
-#     if ([Math]::Abs($Matrix["$($x-1);$y"] - $charValue) -le 1 -and -not $Script:Path.Contains("$($x-1);$y")) {
-#         $operation = "left"
-#         Write-Verbose "Try $operation"
-#         $wayPoint = "$x;$y"
-#         $Script:path.Push($wayPoint)
-#         $script:movement.Add($wayPoint, '<')
-#         ClimbHill -Matrix $Matrix -Start "$($x-1);$y"
-#         $script:movement.Remove($waypoint)
-#         $Script:path.Pop()
-#     }
-#     if ([Math]::Abs($Matrix["$x;$($y-1)"] - $charValue) -le 1 -and -not $Script:Path.Contains("$x;$($y-1)")) {
-#         $operation = "down"
-#         Write-Verbose "Try $operation"
-#         $wayPoint = "$x;$y"
-#         $Script:path.Push($wayPoint)
-#         $script:movement.Add($wayPoint, 'v')
-#         ClimbHill -Matrix $Matrix -Start "$x;$($y-1)"
-#         $Script:path.Pop()
-#         $script:movement.Remove($waypoint)
-#     }
-#     if ($operation -eq "") {
-#         # PrintHill -Matrix $Matrix
-#         return
-#     }
-
-# }
