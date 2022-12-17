@@ -79,18 +79,6 @@ function ClimbHill {
     $x = [int] $x
     $y = [int] $y
     $charValue = [byte][char]$Matrix["$x;$y"]
-    # if ($Script:validPaths.Count -gt 0) {
-    #     if (($Script:Path.Count) -ge $Script:validPaths[0]) {
-    #         Write-Verbose "Path too long $($Script:Path.Count) vs $($Script:validPaths)"
-    #         return
-    #     }
-    # }
-    # if ($charValue -ceq $Script:EndCharInMap) {
-    #     Write-Verbose "Found the end"
-    #     PrintHill -Matrix $Matrix
-    #     [void] $Script:validPaths.Add(($Script:Path).Count)
-    #     return
-    # }
     if (($Script:Path.Count) -ge $script:shortestPath) {
         Write-Verbose "Path too long $($Script:Path.Count) vs $($script:shortestPath)"
         return
@@ -115,7 +103,7 @@ function ClimbHill {
             ClimbHill -Matrix $Matrix -Start $nextkey
             $script:movement[$wayPoint] = $null
             $script:movement.Remove($waypoint)
-            $Script:path.Pop()
+            $prev = $Script:path.Pop()
         }
     }
     $nextKey = "$x;$($y+1)"
@@ -129,7 +117,7 @@ function ClimbHill {
             $script:movement.Add($wayPoint, '^')
             ClimbHill -Matrix $Matrix -Start $nextkey
             $script:movement.Remove($waypoint)
-            $Script:path.Pop()
+            $prev = $Script:path.Pop()
         }
     }
     $nextKey = "$($x-1);$y"
@@ -143,7 +131,7 @@ function ClimbHill {
             $script:movement.Add($wayPoint, '<')
             ClimbHill -Matrix $Matrix -Start $nextKey
             $script:movement.Remove($waypoint)
-            $Script:path.Pop()
+            $prev = $Script:path.Pop()
         }
     }
     $nextKey = "$x;$($y-1)"
@@ -156,7 +144,7 @@ function ClimbHill {
             $Script:path.Push($wayPoint)
             $script:movement.Add($wayPoint, 'v')
             ClimbHill -Matrix $Matrix -Start $nextKey
-            $Script:path.Pop()
+            $prev = $Script:path.Pop()
             $script:movement.Remove($waypoint)
         }
     }
