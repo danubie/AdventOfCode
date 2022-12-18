@@ -25,7 +25,7 @@ Describe 'Testdata' {
         }
     }
     Context 'Part1' {
-        It 'should return 0' {
+        It 'should return 64' {
             $result = Day18 -InputFile "$PSScriptRoot/inputdata.txt"
             # $result.Cubes.Count | Should -Be 2
             # $result.Squares.Count | Should -Be 10
