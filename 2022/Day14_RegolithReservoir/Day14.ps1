@@ -1,4 +1,4 @@
-class point {
+class point1 {
     [int]$x
     [int]$y
     point([int]$x, [int]$y) {
@@ -18,96 +18,149 @@ class point {
 
 function CreateMap {
     [CmdletBinding()]
+    [OutputType([char[,]])]
     param (
         [Parameter(Mandatory=$true)]
         [string]$InputFile
     )
 
-    $script:Map = [hashtable]@{}
+    [string[,]]$script:Map = [string[,]]::New(1000,1000)
+    [int]$script:MaxY = 0
     foreach ($line in Get-Content $InputFile) {
-        $lineEdges = $line -split ' -> '#  $line.Split(' -> ', [StringSplitOptions]::RemoveEmptyEntries)
-        $prev = [point]::new($lineEdges[0].Split(',')[0], $lineEdges[0].Split(',')[1])
-        $Script:Map[$prev] = "#"
+        $lineEdges = $line -split ' -> '
+        $prevX, $prevY = [int[]]$lineEdges[0].Split(',')
+        if ($prevY -gt $MaxY) { $MaxY = $prevY }
+        $script:Map[$prevX,$prevY] = "#"
+
         for ($i = 1; $i -le $lineEdges.Length - 1; $i++) {
-            $next = [point]::new($lineEdges[$i].Split(',')[0], $lineEdges[$i].Split(',')[1])
-            if ($next.x -eq $prev.x) {
+            $nextX, $nextY = [int[]]$lineEdges[$i].Split(',')
+            if ($nextY -gt $script:MaxY) { $script:MaxY = $nextY }
+            if ($nextX -eq $prevX) {
                 # draw a vertical line
-                $minY = [Math]::Min($prev.y, $next.y)
-                $maxY = [Math]::Max($prev.y, $next.y)
+                $minY = [Math]::Min($prevY, $nextY)
+                $maxY = [Math]::Max($prevY, $nextY)
                 for ($y = $minY; $y -le $maxY; $y++) {
-                    $p = [point]::new($prev.x, $y)
-                    $Script:Map[$p] = "#"
+                    $Script:Map[$prevX,$y] = "#"
                 }
-            } elseif ($next.y -eq $prev.y) {
+            } elseif ($nextY -eq $prevY) {
                 # draw a horizontal line
-                $minX = [Math]::Min($prev.x, $next.x)
-                $maxX = [Math]::Max($prev.x, $next.x)
+                $minX = [Math]::Min($prevX, $nextX)
+                $maxX = [Math]::Max($prevX, $nextX)
                 for ($x = $minX; $x -le $maxX; $x++) {
-                    $p = [point]::new($x, $prev.y)
-                    $Script:Map[$p] = "#"
+                    $Script:Map[$x,$prevY] = "#"
                 }
             } else {
                 throw "Invalid line: $line"
             }
-            $prev = $next
+            $prevX = $nextX
+            $prevY = $nextY
             "" | Out-Null
         }
     }
-    $Script:Map
 }
 
+# function CreateMap1 {
+#     [CmdletBinding()]
+#     param (
+#         [Parameter(Mandatory=$true)]
+#         [string]$InputFile
+#     )
+
+#     $script:Map = [hashtable]@{}
+#     $script:MaxY = 0
+#     foreach ($line in Get-Content $InputFile) {
+#         $lineEdges = $line -split ' -> '#  $line.Split(' -> ', [StringSplitOptions]::RemoveEmptyEntries)
+#         $prevX, $prevY = $lineEdges[0].Split(',')
+#         if ($prevY -gt $MaxY) { $MaxY = $prevY }
+#         $Script:Map[$prev] = "#"
+#         for ($i = 1; $i -le $lineEdges.Length - 1; $i++) {
+#             $nextX, $nextY = $lineEdges[$i].Split(',')
+#             if ($nextY -gt $MaxY) { $MaxY = $nextY }
+#             if ($nextX -eq $prevX) {
+#                 # draw a vertical line
+#                 $minY = [Math]::Min($prevY, $nextY)
+#                 $maxY = [Math]::Max($prevY, $nextY)
+#                 for ($y = $minY; $y -le $maxY; $y++) {
+#                     $Script:Map[$prevX, $y] = "#"
+#                 }
+#             } elseif ($nextY -eq $prevY) {
+#                 # draw a horizontal line
+#                 $minX = [Math]::Min($prevX, $nextX)
+#                 $maxX = [Math]::Max($prevX, $nextX)
+#                 for ($x = $minX; $x -le $maxX; $x++) {
+#                     $Script:Map[$x, $prevY] = "#"
+#                 }
+#             } else {
+#                 throw "Invalid line: $line"
+#             }
+#             $prev = $next
+#             "" | Out-Null
+#         }
+#     }
+#     $Script:Map
+# }
 
 function LetItDrop {
     [CmdletBinding()]
     param (
-        [hashtable]$Map,
-        [point] $StartPoint
+        [int] $StartX
     )
-
+    # idea: every following sand takes the same way down as the one before
+    # until the position before one stopped.
+    # this could be the one to start the next exploration of a free field
+    $stack = [System.Collections.Stack]::new()
     $itmoved = $true
-    $letOnMoreDown = $true
-    $cntSand = 0
+    $cntSand = 1
+    $currX = $StartX
+    $currY = 0;
     while ($itmoved) {
-        if ($letOnMoreDown) { $curr = $StartPoint; $cntSand +=1 }
-        $letOnMoreDown = $false
-        $itmoved = $false
-        # find the lowest number in Y direction from my current point of view
-        $lowest = $map.keys | Where-Object { $_.x -eq $curr.x -and $_.y -gt $curr.y } | Sort-Object -Property y -Top 1
-        if ($null -eq $lowest) {
-            # Throw "dead end to eternity"
-            return [PSCustomObject]@{
-                Part1 = $cntSand - 1
-                Part2 = $null
+        Write-Verbose "currX,currY : ($currX, $currY)"
+        "" | Out-Null
+        #which on is the next free space?
+        while ($currY -le $script:MaxY -and $itmoved) {
+            if ($null -eq $Script:Map[$currX,($currY + 1)]) {
+                $stack.Push(($currX,$currY))
+                $currY += 1
+                $itmoved = $true
+            } elseif ($null -eq $Script:Map[($currX - 1),($currY + 1)]) {
+                $stack.Push(($currX,$currY))
+                $currX -= 1
+                $currY += 1
+                $itmoved = $true
+            } elseif ($null -eq $Script:Map[($currX + 1),($currY + 1)]) {
+                $stack.Push(($currX,$currY))
+                $currX += 1
+                $currY += 1
+                $itmoved = $true
+            } else {
+                $itmoved = $false
             }
         }
-        # my current position is lowest.x, lowest.y-1
-        $curr = [point]::new($lowest.x, $lowest.y-1)
-        # if there is a free space down to the left (x-1, y) or right (x+1, y) of me, move there
-        $left = [point]::new($lowest.x - 1, $lowest.y)
-        $right = [point]::new($lowest.x + 1, $lowest.y)
-        if ($null -eq $map[$left]) {    # is left down free?
-            $curr = $left
+        if ($curry -ge $script:MaxY) {
+            # from here to eternity
+            break
+        }
+        # now currX,currY hod the posisition of this sand
+        $script:Map[$currX,$currY] = 'o'
+        if ($stack.Count -gt 0) {
+            $cntSand +=1
+            $currX, $currY = $stack.Pop()
             $itmoved = $true
-        } elseif ($null -eq $map[$right]) { # is right down free?
-            $curr = $right
-            $itmoved = $true
-        } else {
-            # if there is no free space down to the left or right of me, so this unit stops
-            Write-Verbose "$cntSand stopped at $curr"
-            $map[[point]::new($curr.x, $curr.y)] = "o"
-            $itmoved = $true
-            $letOnMoreDown = $true
         }
     }
-
+    ($cntSand - 1)      # -1 because the last one is the one that drops out of the map
 }
+
 function Day14 {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory=$true,Position=0)]
         [string]$InputFile
     )
-    $Map = CreateMap $InputFile
-    $result = LetItDrop -Map $Map -StartPoint ([point]::new(500, 0))
-    $result
+    CreateMap $InputFile
+    $result1 = LetItDrop -StartX 500
+    [PSCustomObject]@{
+        Part1 = $result1
+        Part2 = 0
+    }
 }

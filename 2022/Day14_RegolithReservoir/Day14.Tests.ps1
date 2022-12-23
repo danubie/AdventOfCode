@@ -26,12 +26,12 @@ Describe 'Testdata' {
 }
 Describe 'real data' {
     Context 'Part1' {
-        It 'should return 0' {
-            $result = Day14 -InputFile "$PSScriptRoot/inputdata.txt" -verbose
-            $result.Part1 | Should -Be 24
+        It 'should return correct result' {
+            $result = Day14 -InputFile "$PSScriptRoot/inputdata.txt"
+            $result.Part1 | Should -Be 799
         }
     }
-    Context 'Part2' {
+    Context 'Part2' -Skip {
         It 'should return 0' {
             # $result = Day14 -InputFile "$PSScriptRoot/inputdata.txt"
             # $result | Should -Be 0
