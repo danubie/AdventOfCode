@@ -3,6 +3,7 @@ BeforeAll {
 }
 Describe "Part 1 basic tests" {
     BeforeAll {
+        [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseDeclaredVarsMoreThanAssignments", "", Target = "cubesInBag")] # $cubesInBag is used in the test
         $cubesInBag = @{
             "red" = 12
             "green" = 13
