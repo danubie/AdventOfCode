@@ -42,48 +42,37 @@ function Get-AdjacentPartNumbers {
         $LineNumber = 0
     }
     process {
-        foreach ($line in $InputObject) {
-            $fullList += $line | RegisterPartNumber -LineNumber $LineNumber
+        $fullList += $InputObject | ForEach-Object {
             $LineNumber++
+            RegisterPartNumber -LineNumber $LineNumber -InputObject $_
         }
     }
     end {
-        Write-Verbose ("{0:4} lines, {1:6} symbols" -f $LineNumber, $fullList.Count) -Verbose
-        # for each partnumbers, where in the previous line, the current line and the next line is a symbol, that would have it's place inside the same index range than the partnumber
+        # Write-Verbose ("{0:4} lines, {1:6} symbols" -f $LineNumber, $fullList.Count) -Verbose
         $partNumbers = $fullList | Where-Object { $_.Type -eq 'P' }
-        $listSymbols = $fullList | Where-Object { $_.Type -eq 'S' }
+        $listSymbols = $fullList | Where-Object { $_.Type -eq 'S' } | Group-Object -Property LineNumber -AsHashTable
+
         $progress = 0
         $partNumbers | ForEach-Object {
             $progress++
-            Write-Progress -Activity "Processing partnumbers" -Status ("{0:4} of {1:4}" -f $progress, $partNumbers.Count) -PercentComplete ($progress / $partNumbers.Count * 100)
+            $msg = "{0} of {1}" -f $progress, $partNumbers.Count, $_.Value
+            Write-Progress -Activity "Processing partnumbers" -Status $msg -PercentComplete ($progress / $partNumbers.Count * 100)
             $thisPart = $_
             $currentLine = $_.LineNumber
             $currentStartIndex = $_.StartIndex
             $currentEndIndex = $_.EndIndex
             $previousLine = $currentLine - 1
             $nextLine = $currentLine + 1
-            # check list of symbols in previous line, current line and next line
-            $listSymbol = $listSymbols | Where-Object {
-                $_.LineNumber -eq $previousLine -and
+
+            $listSymbol = $listSymbols[$previousLine]
+            $listSymbol += $listSymbols[$currentLine] | ForEach-Object { $_ }
+            $listSymbol += $listSymbols[$nextLine] | ForEach-Object { $_ }
+            $listSymbol = $listSymbol | Where-Object {
                 $_.Type -eq 'S' -and
                 $_.StartIndex -ge ($currentStartIndex-1) -and
                 $_.EndIndex -le ($currentEndIndex + 1)
             }
             $isAdjacent = $listSymbol.Count -gt 0
-            $listSymbol = $listSymbols | Where-Object {
-                $_.LineNumber -eq $currentLine -and
-                $_.Type -eq 'S' -and
-                $_.StartIndex -ge ($currentStartIndex-1) -and
-                $_.EndIndex -le ($currentEndIndex + 1)
-            }
-            $isAdjacent = $isAdjacent -or $listSymbol.Count -gt 0
-            $listSymbol = $listSymbols | Where-Object {
-                $_.LineNumber -eq $nextLine -and
-                $_.Type -eq 'S' -and
-                $_.StartIndex -ge ($currentStartIndex-1) -and
-                $_.EndIndex -le ($currentEndIndex + 1)
-            }
-            $isAdjacent = $isAdjacent -or $listSymbol.Count -gt 0
             if ($isAdjacent) {
                 $_.Value
             }
