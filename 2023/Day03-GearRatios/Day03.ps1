@@ -49,14 +49,14 @@ function Get-AdjacentPartNumbers {
     }
     end {
         # Write-Verbose ("{0:4} lines, {1:6} symbols" -f $LineNumber, $fullList.Count) -Verbose
-        $partNumbers = $fullList | Where-Object { $_.Type -eq 'P' }
-        $listSymbols = $fullList | Where-Object { $_.Type -eq 'S' } | Group-Object -Property LineNumber -AsHashTable
+        $partNumbers = $fullList | Where-Object { $_.Type -eq 'P' } | Group-Object -Property LineNumber -AsHashTable
+        $listSymbols = $fullList | Where-Object { $_.Type -eq 'S' }
 
         $progress = 0
-        $partNumbers | ForEach-Object {
+        $listSymbols | ForEach-Object {
             $progress++
-            $msg = "{0} of {1}" -f $progress, $partNumbers.Count, $_.Value
-            Write-Progress -Activity "Processing partnumbers" -Status $msg -PercentComplete ($progress / $partNumbers.Count * 100)
+            $msg = "{0} of {1}" -f $progress, $listSymbols.Count, $_.Value
+            Write-Progress -Activity "Processing symbols" -Status $msg -PercentComplete ($progress / $listSymbols.Count * 100)
             $thisPart = $_
             $currentLine = $_.LineNumber
             $currentStartIndex = $_.StartIndex
@@ -64,17 +64,17 @@ function Get-AdjacentPartNumbers {
             $previousLine = $currentLine - 1
             $nextLine = $currentLine + 1
 
-            $listSymbol = $listSymbols[$previousLine]
-            $listSymbol += $listSymbols[$currentLine] | ForEach-Object { $_ }
-            $listSymbol += $listSymbols[$nextLine] | ForEach-Object { $_ }
-            $listSymbol = $listSymbol | Where-Object {
-                $_.Type -eq 'S' -and
-                $_.StartIndex -ge ($currentStartIndex-1) -and
-                $_.EndIndex -le ($currentEndIndex + 1)
+            $listParts = @($partNumbers[$previousLine] | ForEach-Object { $_ })
+            $listParts += $partNumbers[$currentLine] | ForEach-Object { $_ }
+            $listParts += $partNumbers[$nextLine] | ForEach-Object { $_ }
+            $listParts = $listParts | Where-Object {
+                $_.Type -eq 'P' -and
+                $_.StartIndex -le ($currentStartIndex + 1) -and
+                $_.EndIndex -ge ($currentEndIndex - 1)
             }
-            $isAdjacent = $listSymbol.Count -gt 0
+            $isAdjacent = $listParts.Count -gt 0
             if ($isAdjacent) {
-                $_.Value
+                $listParts.Value
             }
             # Write-Verbose ("{0:4} {1:6} {2}" -f $_.LineNumber, $isAdjacent, $_.Value) -Verbose
         }
