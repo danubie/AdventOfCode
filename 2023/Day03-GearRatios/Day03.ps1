@@ -30,11 +30,13 @@ function RegisterPartNumber {
     end {}
 }
 
+# Part 2: Only count partnumbers that are adjacent to a symbol '*' and only if there are exactly 2 adjacent partnumbers
 function Get-AdjacentPartNumbers {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
-        [string[]] $InputObject
+        [string[]] $InputObject,
+        [switch] $Part2
     )
 
     begin {
@@ -51,6 +53,9 @@ function Get-AdjacentPartNumbers {
         # Write-Verbose ("{0:4} lines, {1:6} symbols" -f $LineNumber, $fullList.Count) -Verbose
         $partNumbers = $fullList | Where-Object { $_.Type -eq 'P' } | Group-Object -Property LineNumber -AsHashTable
         $listSymbols = $fullList | Where-Object { $_.Type -eq 'S' }
+        if ($Part2) {
+            $listSymbols = $listSymbols | Where-Object { $_.Value -eq '*' }     # reduce it to '*' only
+        }
 
         $progress = 0
         $listSymbols | ForEach-Object {
@@ -72,9 +77,16 @@ function Get-AdjacentPartNumbers {
                 $_.StartIndex -le ($currentStartIndex + 1) -and
                 $_.EndIndex -ge ($currentEndIndex - 1)
             }
-            $isAdjacent = $listParts.Count -gt 0
-            if ($isAdjacent) {
-                $listParts.Value
+            if ($Part2) {
+                $isAdjacent = $listParts.Count -eq 2
+                if ($isAdjacent) {
+                    [int]$listParts[0].Value * [int]$listParts[1].Value
+                }
+            } else {
+                $isAdjacent = $listParts.Count -gt 0
+                if ($isAdjacent) {
+                    $listParts.Value
+                }
             }
             # Write-Verbose ("{0:4} {1:6} {2}" -f $_.LineNumber, $isAdjacent, $_.Value) -Verbose
         }
@@ -85,14 +97,15 @@ function Get-AdjacentPartNumbers {
 function Day03 {
     [CmdletBinding()]
     param (
-        [string] $InputFile = "$PSScriptRoot/Input.txt"
+        [string] $InputFile = "$PSScriptRoot/Input.txt",
+        [switch] $Part2
     )
 
     begin {}
 
     process {
         $lines = Get-Content $InputFile
-        $adjacentPartNumbers = $lines | Get-AdjacentPartNumbers
+        $adjacentPartNumbers = $lines | Get-AdjacentPartNumbers -Part2:$Part2
         $adjacentPartNumbers | Measure-Object -Sum | Select-Object -ExpandProperty Sum
     }
 

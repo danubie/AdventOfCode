@@ -1,4 +1,6 @@
 # Day03.Tests.ps1
+$PesterPreference = New-PesterConfiguration
+$PesterPreference.Output.Verbosity = 'Detailed'
 BeforeAll {
     . $PSScriptRoot\Day03.ps1
 }
@@ -46,9 +48,9 @@ Describe 'Testdata' {
         }
     }
     Context 'Part2' {
-        It 'should return 0' {
-            # $result = Day03 -InputFile "$PSScriptRoot/input.txt"
-            # $result | Should -Be 0
+        It 'should return sum up products of * adjacent part numbers' {
+            $result = Day03 -InputFile 'dummy' -Part2
+            $result | Should -Be 467835
         }
     }
 }
@@ -61,8 +63,8 @@ Describe 'real data' {
     }
     Context 'Part2' {
         It 'should return 0' {
-            # $result = Day03 -InputFile "$PSScriptRoot/input.txt"
-            # $result | Should -Be 0
+            $result = Day03 -InputFile "$PSScriptRoot/input.txt" -Part2
+            $result | Should -Be 84900879
         }
     }
 }
