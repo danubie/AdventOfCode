@@ -51,9 +51,9 @@ Describe 'Testdata' {
         }
     }
     Context 'Part2' {
-        It 'should return 0' {
-            # $result = Day05 -InputFile "$PSScriptRoot/input.txt"
-            # $result | Should -Be 0
+        It 'should return 35' {
+            $result = Day05 -InputFile "$PSScriptRoot/input.txt"
+            $result | Should -Be 35
         }
     }
 }
