@@ -33,11 +33,16 @@ function Get-CardsThatWin {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
-        [string[]] $InputObject
+        [string[]] $InputObject,
+        [switch] $Part2
     )
 
     begin {
-
+        # initialize a hashtable to count the cards
+        $CardCounts = @{}
+        for ($i = 1; $i -le $InputObject.Count; $i++) {
+            $CardCounts[$i] = 0
+        }
     }
 
     process {
@@ -45,12 +50,23 @@ function Get-CardsThatWin {
             $result = Get-InputData -line $line
             # get mycards that win (intersect with winningNumbers)
             $cardsInWinning = $result.MyCards | Where-Object { $result.winningNumbers -contains $_ }
+            # increment the count for the current card; then for each winning card add 1 to the following cards
+            $CardCounts[[int]$result.CardIndex]++
+            for ($i = 1; $i -le $cardsInWinning.Count; $i++) {
+                $idx = [int]$result.CardIndex + $i
+                $CardCounts[$idx] = $CardCounts[$idx] + $CardCounts[[int]$result.CardIndex]
+            }
+            if ($Part2) {
+                continue
+            }
             $result | Add-Member -MemberType NoteProperty -Name 'myCardsThatWin' -Value ($cardsInWinning ? $cardsInWinning : @()) -PassThru
         }
     }
 
     end {
-
+        if ($Part2) {
+            $CardCounts
+        }
     }
 }
 
@@ -58,7 +74,8 @@ function Day04 {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
-        [string] $InputFile
+        [string] $InputFile,
+        [switch] $Part2
     )
 
     begin {
@@ -67,15 +84,19 @@ function Day04 {
 
     process {
         $inputData = Get-Content -Path $InputFile
-        $allDraws = Get-CardsThatWin -InputObject $inputData
-        $scores = foreach ($draw in $allDraws) {
-            switch ($draw.myCardsThatWin.Count) {
-                0 { 0  }
-                1 { 1 }
-                default { $([math]::Pow(2,$_-1)) }
+        $allDraws = Get-CardsThatWin -InputObject $inputData -Part2:$Part2
+        if ($Part2) {
+            $allDraws.GetEnumerator() | Measure-Object -Sum -Property Value | Select-Object -ExpandProperty Sum
+        } else {
+            $scores = foreach ($draw in $allDraws) {
+                switch ($draw.myCardsThatWin.Count) {
+                    0 { 0  }
+                    1 { 1 }
+                    default { $([math]::Pow(2,$_-1)) }
+                }
             }
+            $scores | Measure-Object -Sum | Select-Object -ExpandProperty Sum
         }
-        $scores | Measure-Object -Sum | Select-Object -ExpandProperty Sum
     }
 
     end {

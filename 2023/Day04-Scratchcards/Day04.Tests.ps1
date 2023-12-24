@@ -1,4 +1,6 @@
 # Day04-Scratchcards.Tests.ps1
+$PesterPreference = New-PesterConfiguration
+$PesterPreference.Output.Verbosity = 'Detailed'
 BeforeAll {
     . $PSScriptRoot\Day04.ps1
 }
@@ -22,9 +24,9 @@ Describe 'Testdata' {
         }
     }
     Context 'Part2' {
-        It 'should return 0' {
-            # $result = Day04 -InputFile "$PSScriptRoot/input.txt"
-            # $result | Should -Be 0
+        It 'should return 30' {
+            $result = Day04 -InputFile "$PSScriptRoot/input.txt" -Part2
+            $result | Should -Be 30
         }
     }
 }
@@ -36,9 +38,9 @@ Describe 'real data' {
         }
     }
     Context 'Part2' {
-        It 'should return 0' {
-            # $result = Day04 -InputFile "$PSScriptRoot/input.txt"
-            # $result | Should -Be 0
+        It 'should return 15455663' {
+            $result = Day04 -InputFile "$PSScriptRoot/input.txt" -Part2
+            $result | Should -Be 15455663
         }
     }
 }
