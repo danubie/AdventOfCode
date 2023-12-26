@@ -1,7 +1,9 @@
+. "$PSScriptRoot/Get-RangeIntersect.ps1"
 function Get-InputData {
     [CmdletBinding()]
     param (
-        [string[]] $line
+        [string[]] $line,
+        [switch] $Part2
     )
 
     begin {
@@ -10,10 +12,23 @@ function Get-InputData {
 
     process {
         $convertFrom = 'seed'
-        foreach ($l in $line) {
-            if ($l.Trim() -eq '') {
-                continue
+        $categoryName = 'seed'
+
+        # seeds are in the first line
+        $regex = [regex] '(?=\s+(\d+))'
+        $m = $regex.Matches($line[0])
+        $seeds = $m | ForEach-Object {
+            [PSCustomObject]@{
+                SourceStart = [int64]$_.Groups[1].Value
+                SourceEnd = [int64]$_.Groups[1].Value
+                DestinationStart = [int64]$_.Groups[1].Value
+                DestinationEnd = [int64]$_.Groups[1].Value
+                Length = 1
             }
+        }
+        $mapFrom = [array]$seeds.PsObject.Copy()
+        $mapTo = [array]$seeds.PsObject.Copy()
+        foreach ($l in $line) {
             # 60 56 37 means destination start, source start, range length; use regex
             if ($l -match '^(\d+) (\d+) (\d+)') {
                 # we do have a range for the current map
@@ -23,90 +38,119 @@ function Get-InputData {
                 $sourceStart = [int64]$m.Groups[2].Value
                 $rangeLength = [int64]$m.Groups[3].Value
                 # add this mapping
-                $Maps[$convertFrom].Map += [PSCustomObject]@{
-                    DestinationStart = $destinationStart
-                    DestinationEnd = $destinationStart + $rangeLength - 1
+                $mapTo += [PSCustomObject]@{
                     SourceStart = $sourceStart
                     SourceEnd = $sourceStart + $rangeLength - 1
-                    RangeLength = $rangeLength
+                    DestinationStart = $destinationStart
+                    DestinationEnd = $destinationStart + $rangeLength - 1
+                    Length = $rangeLength
                 }
-                Write-Verbose "Map: [$convertFrom]  $destinationStart $sourceStart $rangeLength"
+                Write-Verbose "Map: [$convertFrom to $categoryName]  $($mapTo[-1])"
                 continue
             }
             if ($l -match '(\w+)-to-(\w+) map:') {
-                # we get a new mapping e.g. 'seed-to-soil map:'
-                $convertFrom = $Matches[1]  # seed
-                $obj = [PSCustomObject]@{
-                    Name = $Matches[2]     # soil
-                    Map = @()
-                }
-                $Maps[$convertFrom] = $obj
-                Write-Verbose "Map: convert $convertFrom to $($obj.Name)"
+                $categoryName = $Matches[2]
+                $result = $intersecMaps | Sort-Object -Property Start
+                $mapTo = @()
+                Write-Verbose "Starting map to $categoryName"
                 continue
             }
-            if ($l -match 'seeds:') {
-                # this only should be in the first line
-                $regex = [regex] '(?=\s+(\d+))'
-                $m = $regex.Matches($l)
-                $seeds = $m | ForEach-Object {
+            if ($l -match '^$') {
+                # we get an empty line, so now it's time to build the intersecMaps
+                # first look, if there are consecutive ranges in the mapTo
+                # $mapTo = Get-AllRangesConnected -Ranges $mapTo -PropertyStart 'SourceStart' -PropertyEnd 'SourceEnd'
+                #
+                $intersecMaps = @()
+                foreach ($from in $mapFrom) {
+                    $interSects = foreach ($to in $mapTo) {
+                        $inter = Get-RangeIntersect -aStart $from.SourceStart -aEnd $from.SourceEnd -bStart $to.SourceStart -bEnd $to.SourceEnd
+                        if ($null -ne $inter) {
+                            [PSCustomObject]@{
+                                SourceStart = $inter.Start
+                                SourceEnd = $inter.End
+                                DestinationStart = $to.DestinationStart + $inter.RelativeStartInB
+                                DestinationEnd = $to.DestinationStart + $inter.RelativeStartInB + $inter.Length - 1
+                                Length = $inter.Length
+                            }
+                            foreach ($u in $inter.Uncovered) {
+                                if ($null -eq $u) { continue }
+                                $mapFrom += [PSCustomObject]@{
+                                    SourceStart = $u.Start
+                                    SourceEnd = $u.End
+                                    DestinationStart = $u.Start
+                                    DestinationEnd = $u.End
+                                    Length = $u.Length
+                                }
+                            }
+                            break
+                        }
+                    } # loop MapTo
+                    # $intersecMaps += @($interSects).GetEnumerator()
+                    $intersecMaps += foreach ($i in $interSects) {
+                        $i              # return it
+                    }
+                    if (!$interSects) {
+                        # if we don't find an intersection, than take it as 1:1 mapping
+                        $intersecMaps += [PSCustomObject]@{
+                            SourceStart = $from.SourceStart
+                            SourceEnd = $from.SourceEnd
+                            DestinationStart = $from.SourceStart
+                            DestinationEnd = $from.SourceEnd
+                            Length = $from.Length
+                        }
+                    }
+                }   # loop MapFrom
+                    # # loop through all the intersections and find overlapping ranges. If there is an overlap, the range is the sum of the overlapping ranges
+                    # # if there is no overlap, then use the 1:1 mapping
+                    # $intersecMaps = $intersecMaps | Sort-Object -Property SourceStart
+                    # $result = @()
+                    # $start = $intersecMaps[0].SourceStart
+                    # $end = $intersecMaps[0].SourceEnd
+                    # $length = $intersecMaps[0].Length
+                    # for ($i = 1; $i -lt $intersecMaps.Length; $i++) {
+                    #     if ($intersecMaps[$i].SourceStart -le $end) {
+                    #         # there is an overlap
+                    #         if ($intersecMaps[$i].SourceEnd -gt $end) {
+                    #             $end = $intersecMaps[$i].SourceEnd
+                    #         }
+                    #         $length = $end - $start + 1
+                    #     } else {
+                    #         # no overlap
+                    #         $result += [PSCustomObject]@{
+                    #             SourceStart = $start
+                    #             SourceEnd = $end
+                    #             Length = $length
+                    #         }
+                    #         $start = $intersecMaps[$i].SourceStart
+                    #         $end = $intersecMaps[$i].SourceEnd
+                    #         $length = $intersecMaps[$i].Length
+                    #     }
+                    # }
+                    # # if the last range is not yet added, then add it
+                    # if ($result[-1].end -ne $intersecMaps[-1].SourceEnd) {
+                    #     $result += [PSCustomObject]@{
+                    #         SourceStart = $intersecMaps[-1].SourceStart
+                    #         SourceEnd = $intersecMaps[-1].SourceEnd
+                    #         Length = $intersecMaps[-1].SourceEnd - $intersecMaps[-1].SourceStart + 1
+                    #     }
+                    # }
+                    # $mapFrom = $result
+                $result = $mapFrom = foreach ($i in $intersecMaps) {
                     [PSCustomObject]@{
-                        SeedStart = [int64]$_.Groups[1].Value
-                        SeedEnd = [int64]$_.Groups[1].Value
-                        SeedLength = 1
+                        SourceStart = $i.DestinationStart
+                        SourceEnd = $i.DestinationEnd
+                        Length = $i.Length
                     }
                 }
-                Write-Verbose "Seeds: count=$($seeds.Count)"
+                # Write-Verbose "Map: [$convertFrom to $categoryName]  new map from $($mapFrom.Length) ranges"
+                $mapFrom.ForEach({ Write-Verbose "New mappings: [$convertFrom to $categoryName]  $_" })
             }
         }
     }
 
+
     end {
-        $seeds, $Maps
-    }
-}
-
-function GetIntersect {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true)]
-        [int64] $aStart,
-        [Parameter(Mandatory = $true)]
-        [int64] $aEnd,
-        [Parameter(Mandatory = $true)]
-        [int64] $bStart,
-        [Parameter(Mandatory = $true)]
-        [int64] $bEnd
-    )
-
-    begin {}
-
-    process {
-        if ($aStart -gt $bEnd -or $aEnd -lt $bStart) {
-            # no intersection
-            return $null
-        }
-        $start = $aStart
-        if ($aStart -lt $bStart) {
-            $start = $bStart
-        }
-        $end = $aEnd
-        if ($aEnd -gt $bEnd) {
-            $end = $bEnd
-        }
-        $length = $end - $start + 1
-        $relativeStart = $start - $aStart
-        $relativeEnd = $aEnd - $end
-
-        # Create a custom object with the calculated values
-        $result = New-Object PSObject -Property @{
-            Start = $start
-            End = $end
-            Length = $length
-            RelativeStart = $relativeStart
-            RelativeEnd = $relativeEnd
-        }
-
-        return $result
+        $seeds, $result
     }
 }
 
@@ -167,7 +211,8 @@ function Day05 {
     [CmdletBinding()]
     param (
         [Parameter()]
-        [string] $InputFile = "$PSScriptRoot/Input.txt"
+        [string] $InputFile = "$PSScriptRoot/Input.txt",
+        [switch] $Part2 = $false
     )
 
     begin {
@@ -176,9 +221,10 @@ function Day05 {
 
     process {
         $rawData = Get-Content $InputFile
-        $seeds, $Maps = Get-InputData -line $rawData # -Verbose
-        $result = Get-Result -seeds $seeds -Maps $Maps
-        $result.Start | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum
+        # $seeds, $Maps = Get-InputData -line $rawData # -Verbose
+        # $result = Get-Result -seeds $seeds -Maps $Maps
+        $seeds, $result = Get-InputData -line $rawData -Part2:$Part2 # -Verbose
+        $result.DestinationStart | Measure-Object -Minimum | Select-Object -ExpandProperty Minimum
     }
 
     end {

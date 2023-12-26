@@ -46,7 +46,7 @@ Describe 'Testdata' {
     }
     Context 'Part1' {
         It 'should return 35' {
-            $result = Day05 -InputFile "$PSScriptRoot/input.txt"
+            $result = Day05 -InputFile "$PSScriptRoot/input.txt" -Verbose
             $result | Should -Be 35
         }
     }
@@ -60,7 +60,7 @@ Describe 'Testdata' {
 Describe 'real data' {
     Context 'Part1' {
         It 'should return 313045984' {
-            $result = Day05 -InputFile "$PSScriptRoot/input.txt"
+            $result = Day05 -InputFile "$PSScriptRoot/input.txt" -Verbose
             $result | Should -Be 313045984
         }
     }
