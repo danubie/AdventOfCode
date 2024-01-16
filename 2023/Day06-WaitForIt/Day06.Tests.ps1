@@ -34,9 +34,9 @@ Describe 'real data' {
         }
     }
     Context 'Part2' {
-        It 'should return 0' {
+        It 'should return 30125202' {
             $result = Day06 -InputFile "$PSScriptRoot/inputdata.txt"  -Part2
-            $result | Should -Be 2344708
+            $result | Should -Be 30125202
         }
     }
 }
