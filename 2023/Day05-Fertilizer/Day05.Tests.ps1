@@ -51,9 +51,9 @@ Describe 'Testdata' {
         }
     }
     Context 'Part2' {
-        It 'should return 35' {
-            $result = Day05 -InputFile "$PSScriptRoot/input.txt"
-            $result | Should -Be 35
+        It 'should return 46' {
+            $result = Day05 -InputFile "$PSScriptRoot/input.txt" -Part2 -Verbose
+            $result | Should -Be 46
         }
     }
 }
@@ -66,8 +66,8 @@ Describe 'real data' {
     }
     Context 'Part2' {
         It 'should return 0' {
-            # $result = Day05 -InputFile "$PSScriptRoot/input.txt"
-            # $result | Should -Be 0
+            $result = Day05 -InputFile "$PSScriptRoot/input.txt"
+            $result | Should -Be 313045984      # is too high
         }
     }
 }

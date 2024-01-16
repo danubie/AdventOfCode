@@ -15,15 +15,30 @@ function Get-InputData {
         $categoryName = 'seed'
 
         # seeds are in the first line
-        $regex = [regex] '(?=\s+(\d+))'
-        $m = $regex.Matches($line[0])
-        $seeds = $m | ForEach-Object {
-            [PSCustomObject]@{
-                SourceStart = [int64]$_.Groups[1].Value
-                SourceEnd = [int64]$_.Groups[1].Value
-                DestinationStart = [int64]$_.Groups[1].Value
-                DestinationEnd = [int64]$_.Groups[1].Value
-                Length = 1
+        if (!$Part2) {
+            $regex = [regex] '(?=\s+(\d+))'
+            $m = $regex.Matches($line[0])
+            $seeds = $m | ForEach-Object {
+                [PSCustomObject]@{
+                    SourceStart = [int64]$_.Groups[1].Value
+                    SourceEnd = [int64]$_.Groups[1].Value
+                    DestinationStart = [int64]$_.Groups[1].Value
+                    DestinationEnd = [int64]$_.Groups[1].Value
+                    Length = 1
+                }
+            }
+        } else {
+            # part 2 has a different format: it are pairs of numbers (start, count)
+            $regex = [regex] '\s*(?<Start>\d+)\s+(?<Count>\d+)'
+            $m = $regex.Matches($line[0])
+            $seeds = $m | ForEach-Object {
+                [PSCustomObject]@{
+                    SourceStart = [int64]$_.Groups[1].Value
+                    SourceEnd = [int64]$_.Groups[1].Value + [int64]$_.Groups[2].Value - 1
+                    DestinationStart = [int64]$_.Groups[1].Value
+                    DestinationEnd = [int64]$_.Groups[1].Value + [int64]$_.Groups[2].Value - 1
+                    Length = [int64]$_.Groups[2].Value
+                }
             }
         }
         $mapFrom = [array]$seeds.PsObject.Copy()
