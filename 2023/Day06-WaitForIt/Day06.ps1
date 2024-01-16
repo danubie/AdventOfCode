@@ -52,6 +52,38 @@ function AllWins {
     $nbWins
 }
 
+# this function should return the same number as AllWins
+# but the apporach is different
+# find the first time you win from 1 to $TimeGame, then find the last time you win from $TimeGame to 1
+function AllWinsLeftAndRight {
+    param (
+        [Parameter(Mandatory = $true)]
+        [int64]$TimeGame,
+        [Parameter(Mandatory = $true)]
+        [int64]$BestDistance
+    )
+    $firstWin = $lastWin = 0
+    $speed = $TimeHold = 1
+    $distance = ($TimeGame - $TimeHold) * $speed
+    while ($distance -le $BestDistance) {
+        $TimeHold++
+        $distance = ($TimeGame - $TimeHold) * $TimeHold
+    }
+    Write-Verbose "    First win at $TimeHold with distance $distance"
+    $firstWin = $TimeHold
+    $nBWins++
+    $speed = $TimeHold = $TimeGame
+    $distance = ($TimeGame - $TimeHold) * $speed
+    while ($distance -le $BestDistance) {
+        $TimeHold--
+        $distance = ($TimeGame - $TimeHold) * $TimeHold
+    }
+    Write-Verbose "    Last win at $TimeHold with distance $distance"
+    $lastWin = $TimeHold
+    $nBWins = $lastWin - $firstWin + 1
+    $nbWins
+}
+
 function Day06 {
     [CmdletBinding()]
     param (
@@ -62,7 +94,7 @@ function Day06 {
     $InputData = Get-InputData -InputFile $InputFile -Part2:$Part2
     $result = [int64] 1
     $InputData | ForEach-Object {
-        $nbWins = [int64] (AllWins -TimeGame $_.Time -BestDistance $_.Distance)
+        $nbWins = [int64] (AllWinsLeftAndRight -TimeGame $_.Time -BestDistance $_.Distance)
         $result = [int64] $result * $nbWins
         Write-Verbose "Time: $($_.Time), BestDistance: $($_.Distance) => $nbWins wins"
     }
