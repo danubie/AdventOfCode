@@ -23,24 +23,23 @@ QQQJA 483
         }
     }
     Context 'Part2' {
-        It 'should return 0' {
-            # $result = Day07 -InputFile "$PSScriptRoot/inputdata.txt"
-            # $result | Should -Be 0
+        It 'should return 5905' {
+            $result = Day07 -InputFile "$PSScriptRoot/inputdata.txt" -Part2
+            $result | Should -Be 5905
         }
     }
 }
 Describe 'real data' {
     Context 'Part1' {
         It 'should return 246795406' {
-            $result = Day07 -InputFile "$PSScriptRoot/inputdata.txt" -Verbose
+            $result = Day07 -InputFile "$PSScriptRoot/inputdata.txt"
             $result | Should -Be 246795406
-            # 246881013.  Too high
         }
     }
     Context 'Part2' {
-        It 'should return 0' {
-            # $result = Day07 -InputFile "$PSScriptRoot/inputdata.txt"
-            # $result | Should -Be 0
+        It 'should return 249356515.' {
+            $result = Day07 -InputFile "$PSScriptRoot/inputdata.txt" -Part2
+            $result | Should -Be 249356515
         }
     }
 }
