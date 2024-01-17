@@ -1,3 +1,5 @@
+. $PSScriptRoot/BinarySearchTemplate.ps1
+
 function Get-InputData {
     [CmdletBinding()]
     param (
@@ -84,6 +86,87 @@ function AllWinsLeftAndRight {
     $nbWins
 }
 
+# implement a generic binary search algorithm
+#
+function AllWinsBinarySearch {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [int64]$TimeGame,
+        [Parameter(Mandatory = $true)]
+        [int64]$BestDistance
+    )
+
+    begin {
+
+    }
+
+    process {
+        $Context = [PSCustomObject]@{
+            LowBoundary = 1
+            HighBoundary = $TimeGame
+            TimeGame = $TimeGame
+            Target = $BestDistance
+            FirstWin = $TimeGame
+            LastWin = 0
+        }
+        $LowBoundary = 1
+        $HighBoundary = $TimeGame
+        $Test = {
+            param($x, $Context)
+            $speed = $TimeHold = $x
+            $distance = ($Context.TimeGame - $TimeHold) * $speed
+            if ($distance -gt $Context.Target) {
+                if ($Context.FirstWin -gt $x) {
+                    $Context.FirstWin = $x
+                }
+                if ($Context.LastWin -lt $x) {
+                    $Context.LastWin = $x
+                }
+                return 1
+            }
+            return -1
+        }
+        $resultLow = BinarySearchTemplate2 -LowBoundary $LowBoundary -HighBoundary $HighBoundary -Test $Test -Context $Context
+        if ($resultLow -eq -1) {
+            Write-Warning "No win found"
+            return 0
+        }
+        Write-Verbose "    First win at $($Context.FirstWin)"
+        # Context now contains the first and last win
+        # the last win is the start for the search for the upper result
+        $LowBoundary = $Context.LastWin
+        $HighBoundary = $TimeGame
+        $Context.LowBoundary = $Context.LastWin
+        $Script:Target = $BestDistance-1
+        $Test = {
+            param($x, $Context)
+            $speed = $TimeHold = $x
+            $distance = ($Context.TimeGame - $TimeHold) * $speed
+            if ($distance -gt $Context.Target) {
+                if ($Context.LastWin -lt $x) {
+                    $Context.LastWin = $x
+                }
+                return -1
+            }
+            return 1
+        }
+        $resultHigh = BinarySearchTemplate2 -LowBoundary $LowBoundary -HighBoundary $HighBoundary -Test $Test -Context $Context
+        if ($resultHigh -eq -1) {
+            Write-Warning "No win found"
+            return 0
+        }
+        $HighBoundary = $result-1
+        Write-Verbose "    Last win at $($Context.LastWin)"
+        $nbWins = $Context.LastWin - $Context.FirstWin + 1
+        $nbWins
+    }
+
+    end {
+
+    }
+}
+
 function Day06 {
     [CmdletBinding()]
     param (
@@ -94,7 +177,8 @@ function Day06 {
     $InputData = Get-InputData -InputFile $InputFile -Part2:$Part2
     $result = [int64] 1
     $InputData | ForEach-Object {
-        $nbWins = [int64] (AllWinsLeftAndRight -TimeGame $_.Time -BestDistance $_.Distance)
+        # $nbWins = [int64] (AllWinsLeftAndRight -TimeGame $_.Time -BestDistance $_.Distance)
+        $nbWins = [int64] (AllWinsBinarySearch -TimeGame $_.Time -BestDistance $_.Distance)
         $result = [int64] $result * $nbWins
         Write-Verbose "Time: $($_.Time), BestDistance: $($_.Distance) => $nbWins wins"
     }
