@@ -3,11 +3,8 @@ $PesterPreference = New-PesterConfiguration
 $PesterPreference.Output.Verbosity = 'Detailed'
 BeforeAll {
     . $PSScriptRoot\Day08.ps1
-}
 
-Describe 'Testdata' {
-    BeforeAll {
-        Mock Get-Content {@"
+    $Testdata = @"
 RL
 
 AAA = (BBB, CCC)
@@ -17,15 +14,17 @@ DDD = (DDD, DDD)
 EEE = (EEE, EEE)
 GGG = (GGG, GGG)
 ZZZ = (ZZZ, ZZZ)
-"@ -split "`n"
-        }
-    }
-    Context 'Part1' {
+"@
+}
+
+Describe 'Part 1' {
+    Context 'Testdata' {
         It 'should return 2' {
+            Mock Get-Content { $Testdata -split "`n" }
             $result = Day08 -InputFile "$PSScriptRoot/inputdata.txt"
             $result | Should -Be 2
         }
-        It 'should return 6' {
+        It 'should return 6 (other test input)' {
             Mock Get-Content {@"
 LLR
 
@@ -38,24 +37,25 @@ ZZZ = (ZZZ, ZZZ)
             $result | Should -Be 6
         }
     }
-    Context 'Part2' {
-        It 'should return 0' {
-            # $result = Day08 -InputFile "$PSScriptRoot/inputdata.txt"
-            # $result | Should -Be 0
-        }
-    }
-}
-Describe 'real data' {
-    Context 'Part1' {
+    Context 'real data' {
         It 'should return 11567' {
             $result = Day08 -InputFile "$PSScriptRoot/inputdata.txt"
             $result | Should -Be 11567
         }
     }
-    Context 'Part2' {
+}
+Describe 'Part 2' -Skip {
+    Context 'Testdata' {
+        It 'should return 0' {
+            Mock Get-Content { $Testdata -split "`n" }
+            $result = Day08 -InputFile "$PSScriptRoot/inputdata.txt" -Part 2
+            $result | Should -Be 0
+        }
+    }
+    Context 'real data' {
         It 'should return 0' -Skip {
-            # $result = Day08 -InputFile "$PSScriptRoot/inputdata.txt"
-            # $result | Should -Be 0
+            $result = Day08 -InputFile "$PSScriptRoot/inputdata.txt" -Part 2
+            $result | Should -Be 0
         }
     }
 }
