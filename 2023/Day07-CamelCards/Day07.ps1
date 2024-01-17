@@ -13,7 +13,11 @@ function Get-InputData {
         '4' = 4; '3' = 3; '2' = 2;
     }
     if ($Part2) {
-        $mapValue['J'] = 1
+        $mapValue = @{
+            'A' = 14; 'K' = 13; 'Q' = 12; 'J' = 2; 'T' = 11;    # 'J' now is 2!
+            '9' = 10; '8' = 9; '7' = 8; '6' = 7; '5' = 6;
+            '4' = 5; '3' = 4; '2' = 3;
+        }
     }
     # data is in the format (each line) representing a hand of cards and the bid
     # 32T3K 765
