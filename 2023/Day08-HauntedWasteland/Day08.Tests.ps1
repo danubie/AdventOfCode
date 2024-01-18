@@ -17,7 +17,7 @@ ZZZ = (ZZZ, ZZZ)
 "@
 }
 
-Describe 'Part 1' {
+Describe 'Part 1'{
     Context 'Testdata' {
         It 'should return 2' {
             Mock Get-Content { $Testdata -split "`n" }
@@ -44,17 +44,32 @@ ZZZ = (ZZZ, ZZZ)
         }
     }
 }
-Describe 'Part 2' -Skip {
+Describe 'Part 2' {
+    BeforeAll {
+        $Testdata = @"
+LR
+
+11A = (11B, XXX)
+11B = (XXX, 11Z)
+11Z = (11B, XXX)
+22A = (22B, XXX)
+22B = (22C, 22C)
+22C = (22Z, 22Z)
+22Z = (22B, 22B)
+XXX = (XXX, XXX)
+"@
+    }
     Context 'Testdata' {
-        It 'should return 0' {
+        It 'should return 6' {
             Mock Get-Content { $Testdata -split "`n" }
-            $result = Day08 -InputFile "$PSScriptRoot/inputdata.txt" -Part 2
-            $result | Should -Be 0
+            $result = Day08 -InputFile "$PSScriptRoot/inputdata.txt" -Part2
+            $result | Should -Be 6
         }
     }
     Context 'real data' {
         It 'should return 0' -Skip {
-            $result = Day08 -InputFile "$PSScriptRoot/inputdata.txt" -Part 2
+            Throw 'not implemented'
+            $result = Day08 -InputFile "$PSScriptRoot/inputdata.txt" -Part2
             $result | Should -Be 0
         }
     }
