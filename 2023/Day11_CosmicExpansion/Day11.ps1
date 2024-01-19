@@ -4,6 +4,8 @@ using namespace System.Collections.Generic
 using namespace System.Collections
 using namespace System.Linq
 
+$Script:ExpansionRate = 1
+
 function Get-InputData {
     [CmdletBinding()]
     param (
@@ -21,81 +23,82 @@ function Get-InputData {
     # represent this in a list of lists
     $InputData = Get-Content -Path $InputFile
     #region Expand the universe
-    $LinesExpanded = foreach ($line in $InputData) {
+    # collect the linenumbers that need to be expanded
+    $linesToExPandList = [List[int]]::new() # list of line numbers that need to be expanded
+    $lineCount = 0
+    foreach ($line in $InputData) {
         $line = $line.ReplaceLineEndings('')
         if ($line -eq "".PadLeft($line.Length,".")) {       # are all characters in the line a dot?
-            $line                                           # then expand the universe by one line
+            $null = $linesToExPandList.Add($lineCount)
         }
         $line
+        $lineCount++
     }
-    # now we have to expand the universe by one column if in all lines this column contains a dot
-    for ($col = 0; $col -lt $LinesExpanded[0].Length; $col++) {
+    # collect the column numbers that need to be expanded
+    $colsToExPandList = [List[int]]::new()    # list of column numbers that need to be expanded
+    for ($col = 0; $col -lt $InputData[0].Length; $col++) {
         $isAll0 = $true
-        foreach ($line in $LinesExpanded) {
+        foreach ($line in $InputData) {
             if ($line[$col] -ne ".") {
                 $isAll0 = $false
                 break
             }
         }
         if ($isAll0) {
-            $LinesExpanded = foreach ($line in $LinesExpanded) {
-                $line.Insert($col, ".")
-            }
+            $null = $colsToExPandList.Add($col)
             $col++
         }
     }
     #endregion Expand the universe
     $Script:Galaxies = @{}
-    $Script:SpaceMap = [List[List[int]]]::new()
     $galaxyCounter = 0
     $y = 0
-    foreach ($line in $LinesExpanded) {
-        $line = $line.ReplaceLineEndings('')
-        $galaxyLine = [List[int]]::new($line.Length)
+    $lineIndex = 0
+    $lineExpansionQueue = [Queue[int]]::new($linesToExPandList)
+    $nextLineExpanion = $lineExpansionQueue.Dequeue()
+    foreach ($inputLine in $InputData) {
+        if ($lineIndex -ge $nextLineExpanion) {
+            $y += $Script:ExpansionRate
+            if ($lineExpansionQueue.Count -gt 0) {
+                $nextLineExpanion = $lineExpansionQueue.Dequeue()
+            } else {
+                $nextLineExpanion = [int]::MaxValue
+                Write-Verbose "No more y expansions"
+            }
+        }
         $x = 0
-        foreach ($char in $line.ToCharArray()) {
-            if ($char -eq '#') {
+        $colExpansionQueue = [Queue[int]]::new($colsToExPandList)
+        $nextColExpansion = $colExpansionQueue.Dequeue()
+        for ($charIndex = 0; $charIndex -lt $InputData[0].Length; $charIndex++) {
+            if ($charIndex -ge $nextColExpansion) {
+                $x += $Script:ExpansionRate
+                if ($colExpansionQueue.Count -gt 0) {
+                    $nextColExpansion = $colExpansionQueue.Dequeue()
+                } else {
+                    $nextColExpansion = [int]::MaxValue
+                    Write-Verbose "No more x expansions"
+                }
+            }
+            # Write-Verbose "Processing character $charIndex of line $lineIndex; x = $x, y = $y"
+            if ($InputLine[$charIndex] -eq '#') {
                 $galaxyCounter++
-                $galaxyLine.Add($galaxyCounter)
                 $g = [PSCustomObject]@{
                     'Galaxy' = $galaxyCounter
                     'Position' = [Complex]::new($x, $y)
                 }
                 $Script:Galaxies[$g.Position] = $g
-            } else {
-                $galaxyLine.Add(0)
             }
             $x++
         }
-        $Script:SpaceMap.Add($galaxyLine)
         $y++
+        $lineIndex++
     }
-    $Script:SpaceMap
-}
-
-function Out-Map {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true)]
-        [List[List[int]]]$SpaceMap
-    )
-    foreach ($line in $SpaceMap) {
-        foreach ($char in $line) {
-            if ($char -eq 0) {
-                Write-Host -NoNewline '.'
-            } else {
-                Write-Host -NoNewline $char
-            }
-        }
-        Write-Host ''
-    }
+    # $Script:Galaxies.Values | Sort-Object -Property Galaxy | Out-Host
 }
 
 function BuildGalaxyPairs {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $true)]
-        [List[List[int]]]$SpaceMap,
         [Parameter(Mandatory = $true)]
         [Hashtable]$Galaxies,
         [switch]$Part2
@@ -126,10 +129,7 @@ function Day11 {
         [switch]$Part2
     )
 
-    $map = Get-InputData -InputFile $InputFile -Part2:$Part2
-    # Out-Map -SpaceMap $map
-    $sumDistances = BuildGalaxyPairs -SpaceMap $map -Galaxies $Script:Galaxies -Part2:$Part2
-    # Write-Host '______-'
-    # Out-Map -SpaceMap $map
+    $null = Get-InputData -InputFile $InputFile -Part2:$Part2
+    $sumDistances = BuildGalaxyPairs -Galaxies $Script:Galaxies -Part2:$Part2
     $sumDistances
 }
