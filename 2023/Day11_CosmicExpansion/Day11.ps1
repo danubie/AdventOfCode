@@ -93,7 +93,7 @@ function Get-InputData {
         $y++
         $lineIndex++
     }
-    # $Script:Galaxies.Values | Sort-Object -Property Galaxy | Out-Host
+    if ($VerbosePreference -eq 'Continue') {$Script:Galaxies.Values | Sort-Object -Property Galaxy | Out-Host}
 }
 
 function BuildGalaxyPairs {
