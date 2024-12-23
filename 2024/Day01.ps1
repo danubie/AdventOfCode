@@ -1,9 +1,9 @@
 function ReadInputData {
     [CmdletBinding()]
     param (
-        [string] $InputFile
+        [string] $Path
     )
-    $fileContent = Get-Content $InputFile
+    $fileContent = Get-Content -Path $Path -ErrorAction Stop
     $dataLeft = [int[]]::new($fileContent.Count)
     $dataRight = [int[]]::new($fileContent.Count)
     for ($i = 0; $i -lt $fileContent.Count; $i++) {
@@ -16,10 +16,10 @@ function ReadInputData {
 function Day01 {
     [CmdletBinding()]
     param (
-        [string] $InputFile = "$PSScriptRoot/../Input.txt",
+        [string] $Path = "$PSScriptRoot/Data/01.txt",
         [switch] $Part2
     )
-    $dataLeft, $dataRight = ReadInputData -InputFile $InputFile
+    $dataLeft, $dataRight = ReadInputData -Path $Path
     if ($Part2) {
         # hash the numbers of list 2
         # search for each number in list 1 in the hash table and multiply the number with the number of occurences
