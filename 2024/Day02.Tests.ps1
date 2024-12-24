@@ -28,18 +28,34 @@ Describe 'Part 1' {
         }
     }
 }
-Describe 'Part 2' -Skip {
+Describe 'Part 2' {
     Context 'Testdata' {
-        It 'should return 31' {
-            Mock Get-Content { $Testdata -split "`n" }
-            $result = Day02 -InputFile "$PSScriptRoot/inputdata.txt" -Part2
-            $result | Should -Be 31
+        BeforeAll {
+            $pathTestdata = "$PSScriptRoot/inputdata.txt"
+        }
+        AfterAll {
+            if (Test-Path $pathTestdata) { Remove-Item $pathTestdata }
+        }
+        It 'should return 4' {
+            Set-Content -Path $pathTestdata -Value $Testdata
+            $result = Day02 -InputFile $pathTestdata -Part2
+            $result | Should -Be 4
+        }
+        It 'sample data <TestCase>' -ForEach @(
+            # @{ TestCase = '1';  Expected = 1; Data = "1 2 3 4 5" }
+            @{ TestCase = '2';  Expected = 1; Data = '22 25 27 28 30 31 32 29' } #last
+            @{ TestCase = '3';  Expected = 1; Data = '5 3 4 5 6' }  #first
+            @{ TestCase = '4';  Expected = 1; Data = '72 74 75 77 80 81 81' } #first 81
+        ) {
+            Set-Content -Path $pathTestdata -Value $PSItem.Data
+            $result = Day02 -InputFile $pathTestdata -Part2
+            $result | Should -Be $PSItem.Expected
         }
     }
     Context 'real data' {
-        It 'should return 0' -Skip {
+        It '651 is too low' -Skip {
             $result = Day02 -InputFile "$PSScriptRoot/Data/02.txt" -Part2
-            $result | Should -Be 0
+            $result | Should -Be 674
         }
     }
 }

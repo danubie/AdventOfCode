@@ -5,7 +5,7 @@ function ReadInputData {
     )
     Get-Content $InputFile | ForEach-Object {
         $array = $_ -split ' ' | ForEach-Object { [int]$_ }
-        (,$array)
+        @(,$array)
     }
 }
 
@@ -38,10 +38,47 @@ function Day02 {
         [switch] $Part2
     )
     $reportList = ReadInputData -InputFile $InputFile
+    # ugly but it works for the single line testdata
+    if ($reportList[0].Count -eq 1) { $reportList = (,$reportList) }
         # for each report: check if the sorted list is the same as the original list
     $validReports = foreach ($report in $reportList) {
         $result = CheckReport -Report $report
-        if ($result -isnot [int]) { (,$report) }
+        if ($result -eq -1) {
+            @(,$report)      # if the report is valid, return it
+            continue
+        }
+        if ($Part2) {
+            # $result points to the last checked index
+            # remove this element and check again
+            $thisReport = $report[0..($result - 1)]
+            if ($result -lt $report.Length - 1) {
+                $thisReport += $report[($result + 1)..($report.Length - 1)]
+            }
+            $thisResult = CheckReport -Report $thisReport
+            if ($thisResult -eq -1) {
+                @(,$report)  # if the report is valid, return it
+                continue
+            }
+            # if index is 1, it could be the first element which is invalid
+            $thisReport = $report[1..($report.Length - 1)]
+            $thisResult = CheckReport -Report $thisReport
+            if ($thisResult -eq -1) {
+                @(,$report)  # if the report is valid, return it
+                continue
+            }
+            # if the report is invalid, remove the element after $result (the original one!)
+            $thisReport = $report[0..$result]
+            if ($result -lt $report.Length - 2) {
+                $thisReport += $report[($result + 2)..($report.Length - 1)]
+            }
+            $thisResult = CheckReport -Report $thisReport
+            if ($thisResult -eq -1) {
+                @(,$report)  # if the report is valid, return it
+                continue
+            }
+        }
     }
+    if ($null -eq $validReports) { return 0 }
+    if ($validReports[0].Count -eq 1) { $validReports = (,$validReports) }
     $validReports.Count
 }
