@@ -12,25 +12,23 @@ function ReadInputData {
 function CheckReport {
     [CmdletBinding()]
     param (
-        $Report
+        [int[]] $Report
     )
     $fail = -1
-    if ($report[0] -gt $report[1]) {
-        # it must be a descending list
-        foreach ($i in 1..($report.Length - 1)) {
-            # it must be a descending list and the max difference allowed is 3
-            if ($report[$i] -ge $report[$i - 1]) {$fail = $i; break }
-            if ($report[$i - 1] - $report[$i] -gt 3) {$fail = $i; break }
+    if ($report[0] -lt $report[1]) {
+        foreach ($i in 0..($report.Length - 2)) {
+            # it must be a ascending list and the max difference allowed is 3
+            if ($report[$i] -ge $report[$i + 1]) {$fail = $i; break }
+            if ($report[$i+1] - $report[$i] -gt 3) {$fail = $i; break }
         }
     } else {
-        # it must be an ascending list
-        foreach ($i in 1..($report.Length - 1)) {
-            # it must be an ascending list and the max difference allowed is 3
-            if ($report[$i] -le $report[$i - 1]) {$fail = $i; break }
-            if ($report[$i] - $report[$i - 1] -gt 3) {$fail = $i; break }
+        # it must be an descending list
+        foreach ($i in 0..($report.Length - 2)) {
+            # it must be an descending list and the max difference allowed is 3
+            if ($report[$i] -le $report[$i + 1]) {$fail = $i; break }
+            if ($report[$i] - $report[$i + 1] -gt 3) {$fail = $i; break }
         }
     }
-    if ($fail -eq -1) { (,$report) }
     $fail
 }
 function Day02 {
