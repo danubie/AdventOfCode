@@ -13,7 +13,7 @@ Describe 'Part 1' {
         It 'should return 2' {
             Mock Get-Content { $Testdata -split "`n" }
             $result = Day03 -InputFile "$PSScriptRoot/inputdata.txt"
-            $result | Should -Be 2
+            $result | Should -Be 161
         }
     }
     Context 'real data' {
@@ -32,20 +32,20 @@ Describe 'Part 2' {
             if (Test-Path $pathTestdata) { Remove-Item $pathTestdata }
         }
         It 'should return 4' {
-            Set-Content -Path $pathTestdata -Value $Testdata
+            Set-Content -Path $pathTestdata -Value $Testdata "xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))"
             $result = Day03 -InputFile $pathTestdata -Part2
-            $result | Should -Be 4
+            $result | Should -Be 48
         }
-        It 'sample data <TestCase>' -ForEach @(
-            # @{ TestCase = '1';  Expected = 1; Data = "1 2 3 4 5" }
-            @{ TestCase = '2';  Expected = 1; Data = '22 25 27 28 30 31 32 29' } #last
-            @{ TestCase = '3';  Expected = 1; Data = '5 3 4 5 6' }  #first
-            @{ TestCase = '4';  Expected = 1; Data = '72 74 75 77 80 81 81' } #first 81
-        ) {
-            Set-Content -Path $pathTestdata -Value $PSItem.Data
-            $result = Day03 -InputFile $pathTestdata -Part2
-            $result | Should -Be $PSItem.Expected
-        }
+        # It 'sample data <TestCase>' -ForEach @(
+        #     # @{ TestCase = '1';  Expected = 1; Data = "1 2 3 4 5" }
+        #     @{ TestCase = '2';  Expected = 1; Data = '22 25 27 28 30 31 32 29' } #last
+        #     @{ TestCase = '3';  Expected = 1; Data = '5 3 4 5 6' }  #first
+        #     @{ TestCase = '4';  Expected = 1; Data = '72 74 75 77 80 81 81' } #first 81
+        # ) {
+        #     Set-Content -Path $pathTestdata -Value $PSItem.Data
+        #     $result = Day03 -InputFile $pathTestdata -Part2
+        #     $result | Should -Be $PSItem.Expected
+        # }
     }
     Context 'real data' {
         It '651 is too low' -Skip {

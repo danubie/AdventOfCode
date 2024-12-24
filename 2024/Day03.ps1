@@ -4,10 +4,10 @@ function Day03 {
         [string] $InputFile
     )
     $s = Get-Content -Path $InputFile
-    $regex = [regex]::new('mul\((\d+),(\d+)\)')
+    $regex = [regex]::new('(?<op>mul)\((?<x>\d+),(?<y>\d+)\)')
     $sum = 0
     $regex.Matches($s) | ForEach-Object {
-        $sum += [int]$_.Groups[1].Value * [int]$_.Groups[2].Value
+        $sum += [int]$_.Groups["x"].Value * [int]$_.Groups["y"].Value
     }
     $sum
 }
